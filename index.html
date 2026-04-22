@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1a1a">
+<title>AgroPro — Stepanosky Hermanos</title>
+<style>
+:root {
+  --bg: #111111;
+  --bg2: #1c1c1c;
+  --card: #222222;
+  --card2: #2a2a2a;
+  --jd-green: #367c2b;
+  --jd-green2: #2d6824;
+  --jd-yellow: #ffde00;
+  --jd-yellow2: #e6c800;
+  --ford-blue: #003478;
+  --ford-blue2: #00276b;
+  --border: rgba(54,124,43,0.25);
+  --border2: rgba(255,222,0,0.2);
+  --red: #e03131;
+  --orange: #f76707;
+  --text: #f4f4f4;
+  --text2: #888;
+  --text3: #555;
+  --radius: 10px;
+  --radius2: 14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--jd-green);padding:13px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,0.5)}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-logo{background:var(--jd-yellow);color:#000;font-weight:900;font-size:0.75rem;padding:4px 8px;border-radius:4px;letter-spacing:0.5px}
+.topbar-title{font-weight:700;font-size:1rem;color:#fff}
+.topbar-sub{font-size:0.7rem;color:rgba(255,255,255,0.7);margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.badge{font-size:0.62rem;font-weight:700;padding:3px 9px;border-radius:20px}
+.badge-online{background:var(--jd-yellow);color:#000}
+.badge-offline{background:var(--orange);color:#fff}
+.avatar{width:34px;height:34px;background:var(--jd-yellow);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.75rem;color:#000;cursor:pointer;flex-shrink:0}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;border-top:2px solid var(--jd-green);display:flex;z-index:100}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 4px;cursor:pointer;color:var(--text2);background:none;border:none;transition:color 0.15s}
+.nav-item.active{color:var(--jd-yellow)}
+.nav-icon{font-size:1.3rem;margin-bottom:2px}
+.nav-label{font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.4px}
+
+/* ── CONTENT ── */
+.content{flex:1;padding:16px;overflow-y:auto;padding-bottom:76px}
+
+/* ── LOGIN ── */
+#login{background:linear-gradient(160deg,#0d1f0a,#111);justify-content:center;align-items:center;padding:24px}
+.login-header{text-align:center;margin-bottom:36px}
+.login-brand{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px}
+.login-badge{background:var(--jd-yellow);color:#000;font-weight:900;font-size:1.4rem;padding:8px 14px;border-radius:6px;letter-spacing:1px}
+.login-title{font-size:1.8rem;font-weight:900;color:#fff;letter-spacing:-0.5px}
+.login-sub{color:var(--text2);font-size:0.85rem}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius2);padding:24px;width:100%;max-width:380px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:0.72rem;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
+.form-group input{width:100%;background:var(--bg2);border:1.5px solid #333;border-radius:8px;padding:13px 14px;color:var(--text);font-size:0.95rem;outline:none}
+.form-group input:focus{border-color:var(--jd-green)}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.role-btn{background:var(--bg2);border:2px solid #333;border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;transition:all 0.15s}
+.role-btn.selected{border-color:var(--jd-yellow);background:rgba(255,222,0,0.08)}
+.role-btn .r-icon{font-size:1.7rem;margin-bottom:4px}
+.role-btn .r-label{font-size:0.75rem;color:var(--text2);font-weight:600}
+.role-btn.selected .r-label{color:var(--jd-yellow)}
+.btn-primary{width:100%;background:var(--jd-green);color:#fff;font-weight:800;font-size:1rem;padding:15px;border:none;border-radius:10px;cursor:pointer;letter-spacing:0.3px}
+.btn-primary:active{background:var(--jd-green2)}
+.btn-yellow{width:100%;background:var(--jd-yellow);color:#000;font-weight:800;font-size:1rem;padding:15px;border:none;border-radius:10px;cursor:pointer}
+.btn-yellow:active{background:var(--jd-yellow2)}
+.btn-red{width:100%;background:var(--red);color:#fff;font-weight:800;font-size:1rem;padding:16px;border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-blue{width:100%;background:var(--ford-blue);color:#fff;font-weight:800;font-size:1rem;padding:16px;border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid #2e2e2e;border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.card-title{font-size:0.68rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.7px;font-weight:700;margin-bottom:10px}
+.section-title{font-size:0.68rem;color:var(--jd-yellow);text-transform:uppercase;letter-spacing:0.8px;font-weight:700;margin-bottom:10px;margin-top:6px;display:flex;align-items:center;gap:6px}
+.section-title::after{content:'';flex:1;height:1px;background:rgba(255,222,0,0.15)}
+
+/* ── STATS ── */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat-row-2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--card2);border-radius:8px;padding:12px 8px;text-align:center;border:1px solid #2e2e2e}
+.stat-val{font-size:1.4rem;font-weight:800;color:var(--jd-yellow)}
+.stat-val.green{color:var(--jd-green)}
+.stat-val.red{color:var(--red)}
+.stat-val.white{color:#fff}
+.stat-lbl{font-size:0.6rem;color:var(--text2);margin-top:2px;text-transform:uppercase;font-weight:600}
+
+/* ── JOB ITEMS ── */
+.job-item{background:var(--card2);border-radius:var(--radius);padding:13px;margin-bottom:8px;border-left:3px solid var(--jd-green);display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.job-item:active{opacity:0.8}
+.job-item.yellow-border{border-left-color:var(--jd-yellow)}
+.job-name{font-weight:700;font-size:0.9rem}
+.job-meta{font-size:0.72rem;color:var(--text2);margin-top:3px}
+.job-badge{font-size:0.62rem;font-weight:700;padding:4px 9px;border-radius:20px;white-space:nowrap}
+.badge-active{background:rgba(54,124,43,0.2);color:#5cb85c;border:1px solid rgba(54,124,43,0.4)}
+.badge-pending{background:rgba(255,222,0,0.1);color:var(--jd-yellow);border:1px solid rgba(255,222,0,0.25)}
+.badge-done{background:rgba(136,136,136,0.15);color:var(--text2);border:1px solid #333}
+
+/* ── WEATHER ── */
+.weather-bar{background:var(--card2);border-radius:var(--radius);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border:1px solid #2e2e2e}
+.weather-item{text-align:center}
+.w-val{font-size:0.95rem;font-weight:700;color:#fff}
+.w-lbl{font-size:0.6rem;color:var(--text2);text-transform:uppercase;margin-top:1px}
+
+/* ── SERVICIO ACTIVO ── */
+.map-box{background:linear-gradient(135deg,#0d1f0a,#1a2e1a);border:1px solid var(--border);border-radius:var(--radius);height:200px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;margin-bottom:14px;position:relative;overflow:hidden}
+.map-box::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(54,124,43,0.06) 28px,rgba(54,124,43,0.06) 29px),repeating-linear-gradient(90deg,transparent,transparent 28px,rgba(54,124,43,0.06) 28px,rgba(54,124,43,0.06) 29px)}
+.map-gps{font-size:2.2rem;position:relative;z-index:1}
+.map-coords{font-size:0.72rem;color:var(--jd-green);position:relative;z-index:1;font-family:monospace}
+.map-label{font-size:0.75rem;color:var(--text2);position:relative;z-index:1}
+.live-dot{width:8px;height:8px;background:var(--jd-yellow);border-radius:50%;display:inline-block;animation:blink 1.2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.counter-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.counter-card{background:var(--card);border:1px solid #333;border-radius:var(--radius);padding:14px;text-align:center}
+.counter-val{font-size:1.8rem;font-weight:900;color:var(--jd-yellow);font-variant-numeric:tabular-nums}
+.counter-unit{font-size:0.62rem;color:var(--text2);text-transform:uppercase;margin-top:2px;font-weight:600}
+.timer-txt{color:#fff;font-size:1.3rem}
+.alert-box{background:rgba(231,103,7,0.12);border:1px solid rgba(231,103,7,0.35);border-radius:8px;padding:11px 13px;font-size:0.8rem;color:var(--orange);margin-bottom:12px;display:none}
+.alert-box.show{display:flex;align-items:center;gap:8px}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;display:none;align-items:flex-end}
+.modal-overlay.open{display:flex}
+.modal{background:#1e1e1e;border-radius:18px 18px 0 0;padding:22px;width:100%;max-height:90vh;overflow-y:auto;border-top:2px solid var(--jd-green)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal-title{font-size:1rem;font-weight:800}
+.modal-close{background:#333;border:none;color:var(--text2);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:0.9rem}
+.inp-group{margin-bottom:12px}
+.inp-group label{display:block;font-size:0.68rem;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px;font-weight:700}
+.inp-group input,.inp-group select,.inp-group textarea{width:100%;background:#111;border:1.5px solid #333;border-radius:8px;padding:12px 13px;color:var(--text);font-size:0.95rem;outline:none}
+.inp-group input:focus,.inp-group select:focus{border-color:var(--jd-green)}
+.inp-group textarea{resize:none;height:70px}
+.inp-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hum-alert{background:rgba(224,49,49,0.1);border:1px solid rgba(224,49,49,0.3);border-radius:8px;padding:9px 12px;font-size:0.78rem;color:var(--red);margin-bottom:12px;display:none}
+.hum-alert.show{display:block}
+
+/* ── FOTO UPLOAD ── */
+.foto-section{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.foto-btn{background:#111;border:1.5px dashed #444;border-radius:8px;padding:14px 8px;text-align:center;cursor:pointer;position:relative;overflow:hidden}
+.foto-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.foto-icon{font-size:1.4rem;margin-bottom:4px}
+.foto-label{font-size:0.68rem;color:var(--text2);font-weight:600;text-transform:uppercase}
+.foto-preview{width:100%;height:70px;object-fit:cover;border-radius:6px;display:none}
+
+/* ── PERSONAL ── */
+.emp-item{background:var(--card2);border-radius:var(--radius);padding:13px;margin-bottom:8px;display:flex;align-items:center;gap:12px;border:1px solid #2e2e2e;cursor:pointer}
+.emp-avatar{width:42px;height:42px;background:var(--jd-green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9rem;color:#fff;flex-shrink:0}
+.emp-info{flex:1}
+.emp-name{font-weight:700;font-size:0.9rem}
+.emp-role{font-size:0.72rem;color:var(--text2);margin-top:2px}
+.emp-stats{text-align:right}
+.emp-horas{font-size:0.85rem;font-weight:700;color:var(--jd-yellow)}
+.emp-cobro{font-size:0.7rem;color:var(--text2)}
+.pago-breakdown{background:var(--card2);border-radius:8px;padding:12px;margin-top:10px}
+.pago-row{display:flex;justify-content:space-between;font-size:0.82rem;padding:4px 0;border-bottom:1px solid #2e2e2e}
+.pago-row:last-child{border-bottom:none;font-weight:700;color:var(--jd-yellow)}
+.tab-row{display:flex;gap:6px;margin-bottom:14px}
+.tab-btn{flex:1;background:var(--card2);border:1px solid #333;border-radius:8px;padding:9px;text-align:center;font-size:0.72rem;font-weight:700;color:var(--text2);cursor:pointer;text-transform:uppercase}
+.tab-btn.active{background:var(--jd-green);color:#fff;border-color:var(--jd-green)}
+
+/* ── CPE ── */
+.cpe-header{background:linear-gradient(135deg,var(--ford-blue),#001f4d);border-radius:var(--radius);padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.cpe-title{font-weight:800;font-size:0.95rem}
+.cpe-sub{font-size:0.72rem;color:rgba(255,255,255,0.6);margin-top:2px}
+
+/* ── PERFIL ── */
+.perf-hero{background:linear-gradient(135deg,var(--jd-green2),#1a3a14);border-radius:var(--radius);padding:22px;text-align:center;margin-bottom:12px;border:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<!-- ════════════════ LOGIN ════════════════ -->
+<div id="login" class="screen active">
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;background:linear-gradient(160deg,#0a1f07,#111)">
+    <div class="login-header">
+      <div class="login-brand">
+        <div class="login-badge">AGRO</div>
+        <div class="login-title">PRO</div>
+      </div>
+      <div class="login-sub">Stepanosky Hermanos · Gestión de Campo</div>
+    </div>
+    <div class="login-card">
+      <div class="form-group">
+        <label>Usuario</label>
+        <input type="email" id="usr" placeholder="usuario@agro.com" value="admin@stepanosky.com">
+      </div>
+      <div class="form-group" style="margin-bottom:18px">
+        <label>Contraseña</label>
+        <input type="password" id="pwd" placeholder="••••••••" value="12345678">
+      </div>
+      <div class="form-group">
+        <label>Ingresar como</label>
+        <div class="role-grid">
+          <div class="role-btn selected" onclick="selectRole('admin',this)">
+            <div class="r-icon">👔</div>
+            <div class="r-label">Administrador</div>
+          </div>
+          <div class="role-btn" onclick="selectRole('operador',this)">
+            <div class="r-icon">🚜</div>
+            <div class="r-label">Operador</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="doLogin()">INGRESAR AL SISTEMA</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ DASHBOARD OPERADOR ════════════════ -->
+<div id="dashboard-op" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">JD</div>
+      <div><div class="topbar-title">Dashboard</div><div class="topbar-sub">Stepanosky Hermanos</div></div>
+    </div>
+    <div class="topbar-right">
+      <span class="badge badge-online" id="op-sync">● ONLINE</span>
+      <div class="avatar">MG</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="weather-bar">
+      <div class="weather-item"><div class="w-val">22°C</div><div class="w-lbl">Temp</div></div>
+      <div class="weather-item"><div class="w-val">☀️</div><div class="w-lbl">Estado</div></div>
+      <div class="weather-item"><div class="w-val">12%</div><div class="w-lbl">Lluvia</div></div>
+      <div class="weather-item"><div class="w-val">8 km/h</div><div class="w-lbl">Viento</div></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="stat-val">42</div><div class="stat-lbl">Ha hoy</div></div>
+      <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">Cargas</div></div>
+      <div class="stat"><div class="stat-val white">128t</div><div class="stat-lbl">Toneladas</div></div>
+    </div>
+    <div class="section-title">Trabajos asignados</div>
+    <div class="job-item" onclick="goToServicio()">
+      <div>
+        <div class="job-name">🌾 Cosecha Soja — Lote Norte</div>
+        <div class="job-meta">John Deere S760 · Cabezal 35m · Cliente: García</div>
+      </div>
+      <span class="job-badge badge-active">ACTIVO</span>
+    </div>
+    <div class="job-item yellow-border">
+      <div>
+        <div class="job-name">🚛 Transporte — Acopio Trenque</div>
+        <div class="job-meta">Camión AA 123 BB · Soja · CPE requerida</div>
+      </div>
+      <span class="job-badge badge-pending">PENDIENTE</span>
+    </div>
+    <div class="job-item yellow-border">
+      <div>
+        <div class="job-name">🌱 Siembra Maíz — Lote Sur</div>
+        <div class="job-meta">Case IH 150 · Mañana 06:00 hs</div>
+      </div>
+      <span class="job-badge badge-pending">PENDIENTE</span>
+    </div>
+    <button class="btn-yellow" style="margin-top:14px" onclick="goToServicio()">▶ INICIAR SERVICIO ACTIVO</button>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="showScreen('dashboard-op')"><div class="nav-icon">🏠</div><div class="nav-label">Inicio</div></button>
+    <button class="nav-item" onclick="goToServicio()"><div class="nav-icon">⚡</div><div class="nav-label">Activo</div></button>
+    <button class="nav-item" onclick="showScreen('maquinas')"><div class="nav-icon">🚜</div><div class="nav-label">Flota</div></button>
+    <button class="nav-item" onclick="showScreen('perfil')"><div class="nav-icon">👤</div><div class="nav-label">Perfil</div></button>
+  </div>
+</div>
+
+<!-- ════════════════ SERVICIO ACTIVO ════════════════ -->
+<div id="servicio" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">⚡</div>
+      <div><div class="topbar-title"><span class="live-dot"></span> EN SERVICIO</div><div class="topbar-sub">Cosecha Soja — Lote Norte</div></div>
+    </div>
+    <div class="topbar-right">
+      <span class="badge badge-offline" id="serv-sync">OFFLINE</span>
+    </div>
+  </div>
+  <div class="content">
+    <div class="map-box">
+      <div class="map-gps">📍</div>
+      <div class="map-label">GPS activo — trazando recorrido</div>
+      <div class="map-coords">-34.6037° S, -60.9531° O</div>
+      <div style="position:relative;z-index:1;font-size:0.68rem;color:var(--text2);margin-top:4px">Mapa en tiempo real — próxima versión</div>
+    </div>
+    <div class="counter-grid">
+      <div class="counter-card">
+        <div class="counter-val" id="ha-counter">0.00</div>
+        <div class="counter-unit">Hectáreas</div>
+      </div>
+      <div class="counter-card">
+        <div class="counter-val timer-txt" id="timer">00:00:00</div>
+        <div class="counter-unit">Tiempo activo</div>
+      </div>
+      <div class="counter-card">
+        <div class="counter-val" id="ton-counter">0</div>
+        <div class="counter-unit">Toneladas</div>
+      </div>
+      <div class="counter-card">
+        <div class="counter-val" id="carga-counter">0</div>
+        <div class="counter-unit">Cargas</div>
+      </div>
+    </div>
+    <div class="alert-box" id="wind-alert">⚠️ Viento &gt;15 km/h — Revisar condiciones de trabajo</div>
+    <button class="btn-blue" onclick="openModal('carga')">➕ REGISTRAR CARGA / TICKET</button>
+    <button class="btn-blue" style="background:var(--ford-blue2)" onclick="openModal('cpe')">📄 CARTA DE PORTE (CPE)</button>
+    <button class="btn-red" onclick="stopServicio()">⏹ DETENER SERVICIO</button>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-item" onclick="showScreen('dashboard-op')"><div class="nav-icon">🏠</div><div class="nav-label">Inicio</div></button>
+    <button class="nav-item active"><div class="nav-icon">⚡</div><div class="nav-label">Activo</div></button>
+    <button class="nav-item" onclick="showScreen('maquinas')"><div class="nav-icon">🚜</div><div class="nav-label">Flota</div></button>
+    <button class="nav-item" onclick="showScreen('perfil')"><div class="nav-icon">👤</div><div class="nav-label">Perfil</div></button>
+  </div>
+</div>
+
+<!-- ════════════════ MODAL CARGA ════════════════ -->
+<div class="modal-overlay" id="modal-carga">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📦 Registrar Carga</div>
+      <button class="modal-close" onclick="closeModal('carga')">✕</button>
+    </div>
+    <div class="inp-group">
+      <label>Tipo de grano / cultivo</label>
+      <select id="grano"><option>Soja</option><option>Maíz</option><option>Trigo</option><option>Girasol</option><option>Sorgo</option></select>
+    </div>
+    <div class="inp-row">
+      <div class="inp-group"><label>Toneladas</label><input type="number" id="toneladas" placeholder="28.5" step="0.1"></div>
+      <div class="inp-group"><label>% Humedad</label><input type="number" id="humedad" placeholder="13.5" step="0.1" oninput="checkHumedad(this.value)"></div>
+    </div>
+    <div class="hum-alert" id="hum-alert">⚠️ Humedad &gt;14.5% — posible merma en recepción del acopio</div>
+    <div class="inp-row">
+      <div class="inp-group"><label>Litros combustible</label><input type="number" id="combustible" placeholder="120"></div>
+      <div class="inp-group"><label>Nro. Ticket balanza</label><input type="text" id="ticket" placeholder="B-00421"></div>
+    </div>
+    <div class="inp-group"><label>Observaciones</label><textarea id="obs" placeholder="Grano limpio, sin impurezas..."></textarea></div>
+    <div class="section-title" style="margin-bottom:10px">Fotos</div>
+    <div class="foto-section">
+      <div class="foto-btn" onclick="triggerFoto('foto-balanza')">
+        <input type="file" id="foto-balanza" accept="image/*" capture="environment" onchange="previewFoto(this,'prev-balanza')">
+        <img class="foto-preview" id="prev-balanza">
+        <div class="foto-icon" id="icon-balanza">🧾</div>
+        <div class="foto-label">Ticket balanza</div>
+      </div>
+      <div class="foto-btn" onclick="triggerFoto('foto-combustible')">
+        <input type="file" id="foto-combustible" accept="image/*" capture="environment" onchange="previewFoto(this,'prev-combustible')">
+        <img class="foto-preview" id="prev-combustible">
+        <div class="foto-icon" id="icon-combustible">⛽</div>
+        <div class="foto-label">Combustible</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="guardarCarga()">GUARDAR CARGA</button>
+  </div>
+</div>
+
+<!-- ════════════════ MODAL CPE ════════════════ -->
+<div class="modal-overlay" id="modal-cpe">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📄 Carta de Porte Electrónica</div>
+      <button class="modal-close" onclick="closeModal('cpe')">✕</button>
+    </div>
+    <div class="cpe-header">
+      <div>🏛️</div>
+      <div><div class="cpe-title">CPE — AFIP</div><div class="cpe-sub">Resolución General 5017/2021</div></div>
+    </div>
+    <div class="section-title">Remitente</div>
+    <div class="inp-row">
+      <div class="inp-group"><label>CUIT Remitente</label><input type="text" id="cuit-rem" placeholder="30-12345678-9"></div>
+      <div class="inp-group"><label>Razón social</label><input type="text" id="rs-rem" placeholder="Stepanosky Hnos."></div>
+    </div>
+    <div class="section-title">Destinatario</div>
+    <div class="inp-row">
+      <div class="inp-group"><label>CUIT Destinatario</label><input type="text" id="cuit-dest" placeholder="20-98765432-1"></div>
+      <div class="inp-group"><label>Razón social</label><input type="text" id="rs-dest" placeholder="Acopio Trenque S.A."></div>
+    </div>
+    <div class="section-title">Carga</div>
+    <div class="inp-row">
+      <div class="inp-group"><label>Tipo de grano</label>
+        <select id="cpe-grano"><option>Soja</option><option>Maíz</option><option>Trigo</option><option>Girasol</option></select>
+      </div>
+      <div class="inp-group"><label>Cantidad (tn)</label><input type="number" id="cpe-ton" placeholder="28.0" step="0.1"></div>
+    </div>
+    <div class="inp-row">
+      <div class="inp-group"><label>% Humedad</label><input type="number" id="cpe-hum" placeholder="13.5" step="0.1"></div>
+      <div class="inp-group"><label>Patente camión</label><input type="text" id="cpe-patente" placeholder="AA 123 BB"></div>
+    </div>
+    <div class="section-title">Origen / Destino</div>
+    <div class="inp-row">
+      <div class="inp-group"><label>Localidad origen</label><input type="text" id="cpe-origen" placeholder="Trenque Lauquen"></div>
+      <div class="inp-group"><label>Localidad destino</label><input type="text" id="cpe-destino" placeholder="Bahía Blanca"></div>
+    </div>
+    <div class="inp-group"><label>Km estimados</label><input type="number" id="cpe-km" placeholder="320"></div>
+    <div class="foto-section" style="margin-bottom:14px">
+      <div class="foto-btn" onclick="triggerFoto('foto-cpe')">
+        <input type="file" id="foto-cpe" accept="image/*" capture="environment" onchange="previewFoto(this,'prev-cpe')">
+        <img class="foto-preview" id="prev-cpe">
+        <div class="foto-icon" id="icon-cpe">📄</div>
+        <div class="foto-label">Foto CPE papel</div>
+      </div>
+      <div class="foto-btn" onclick="triggerFoto('foto-camion')">
+        <input type="file" id="foto-camion" accept="image/*" capture="environment" onchange="previewFoto(this,'prev-camion')">
+        <img class="foto-preview" id="prev-camion">
+        <div class="foto-icon" id="icon-camion">🚛</div>
+        <div class="foto-label">Foto camión/patente</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="guardarCPE()">GUARDAR CPE</button>
+  </div>
+</div>
+
+<!-- ════════════════ DASHBOARD ADMIN ════════════════ -->
+<div id="dashboard-admin" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">SH</div>
+      <div><div class="topbar-title">Administración</div><div class="topbar-sub">Stepanosky Hermanos</div></div>
+    </div>
+    <div class="topbar-right">
+      <span class="badge badge-online">● ONLINE</span>
+      <div class="avatar" onclick="logout()">RS</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="section-title">Rentabilidad — Abril 2025</div>
+    <div class="stat-row">
+      <div class="stat"><div class="stat-val">$4.28M</div><div class="stat-lbl">Ingresos</div></div>
+      <div class="stat"><div class="stat-val red">$1.2M</div><div class="stat-lbl">Costos</div></div>
+      <div class="stat"><div class="stat-val green">72%</div><div class="stat-lbl">Margen</div></div>
+    </div>
+    <div class="stat-row-2">
+      <div class="stat"><div class="stat-val white">248 ha</div><div class="stat-lbl">Hectáreas mes</div></div>
+      <div class="stat"><div class="stat-val white">840 t</div><div class="stat-lbl">Toneladas mes</div></div>
+    </div>
+    <div class="section-title">Flota en tiempo real</div>
+    <div class="job-item" onclick="showScreen('maquinas')">
+      <div><div class="job-name">🌾 John Deere S760</div><div class="job-meta">Lote Norte · Op: Miguel G. · 42 ha hoy</div></div>
+      <span class="job-badge badge-active">EN CAMPO</span>
+    </div>
+    <div class="job-item yellow-border" onclick="showScreen('maquinas')">
+      <div><div class="job-name">🚛 Camión AA 123 BB</div><div class="job-meta">Ruta 33 → Trenque Lauquen · CPE activa</div></div>
+      <span class="job-badge badge-active">EN RUTA</span>
+    </div>
+    <div class="job-item" onclick="showScreen('maquinas')">
+      <div><div class="job-name">🚜 Case IH Magnum 150</div><div class="job-meta">Sin servicio activo</div></div>
+      <span class="job-badge badge-done">INACTIVO</span>
+    </div>
+    <div class="section-title">Accesos rápidos</div>
+    <div class="stat-row">
+      <div class="stat" style="cursor:pointer" onclick="showScreen('personal')"><div class="stat-val white">👷</div><div class="stat-lbl">Personal</div></div>
+      <div class="stat" style="cursor:pointer" onclick="showScreen('maquinas')"><div class="stat-val white">🚜</div><div class="stat-lbl">Flota</div></div>
+      <div class="stat" style="cursor:pointer"><div class="stat-val white">📊</div><div class="stat-lbl">Reportes</div></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="showScreen('dashboard-admin')"><div class="nav-icon">📊</div><div class="nav-label">Dashboard</div></button>
+    <button class="nav-item" onclick="showScreen('personal')"><div class="nav-icon">👷</div><div class="nav-label">Personal</div></button>
+    <button class="nav-item" onclick="showScreen('maquinas')"><div class="nav-icon">🚜</div><div class="nav-label">Flota</div></button>
+    <button class="nav-item" onclick="showScreen('perfil')"><div class="nav-icon">⚙️</div><div class="nav-label">Config</div></button>
+  </div>
+</div>
+
+<!-- ════════════════ PERSONAL ════════════════ -->
+<div id="personal" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">👷</div>
+      <div><div class="topbar-title">Personal</div><div class="topbar-sub">Stepanosky Hermanos</div></div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="tab-row">
+      <div class="tab-btn active" onclick="setEmpTab('resumen',this)">Resumen</div>
+      <div class="tab-btn" onclick="setEmpTab('detalle',this)">Detalle</div>
+      <div class="tab-btn" onclick="setEmpTab('cobros',this)">Cobros</div>
+    </div>
+
+    <!-- RESUMEN -->
+    <div id="emp-resumen">
+      <div class="stat-row">
+        <div class="stat"><div class="stat-val white">5</div><div class="stat-lbl">Empleados</div></div>
+        <div class="stat"><div class="stat-val">142h</div><div class="stat-lbl">Hs mes</div></div>
+        <div class="stat"><div class="stat-val red">$380K</div><div class="stat-lbl">Total cobros</div></div>
+      </div>
+      <div class="section-title">Equipo activo</div>
+      <div class="emp-item" onclick="showEmpDetalle('Miguel González','Maquinista','86h','248 ha','$95.000','$35.000','$60.000')">
+        <div class="emp-avatar">MG</div>
+        <div class="emp-info"><div class="emp-name">Miguel González</div><div class="emp-role">Maquinista · John Deere S760</div></div>
+        <div class="emp-stats"><div class="emp-horas">86 hs</div><div class="emp-cobro">$95.000</div></div>
+      </div>
+      <div class="emp-item" onclick="showEmpDetalle('Carlos Rodríguez','Tractorista','74h','180 ha','$78.000','$35.000','$43.000')">
+        <div class="emp-avatar">CR</div>
+        <div class="emp-info"><div class="emp-name">Carlos Rodríguez</div><div class="emp-role">Tractorista · Case IH</div></div>
+        <div class="emp-stats"><div class="emp-horas">74 hs</div><div class="emp-cobro">$78.000</div></div>
+      </div>
+      <div class="emp-item" onclick="showEmpDetalle('Juan Pérez','Camionero','68h','—','$72.000','$35.000','$37.000')">
+        <div class="emp-avatar">JP</div>
+        <div class="emp-info"><div class="emp-name">Juan Pérez</div><div class="emp-role">Camionero · AA 123 BB</div></div>
+        <div class="emp-stats"><div class="emp-horas">68 hs</div><div class="emp-cobro">$72.000</div></div>
+      </div>
+      <div class="emp-item">
+        <div class="emp-avatar" style="background:#555">RA</div>
+        <div class="emp-info"><div class="emp-name">Roberto Alvarez</div><div class="emp-role">Peón de campo</div></div>
+        <div class="emp-stats"><div class="emp-horas">60 hs</div><div class="emp-cobro">$65.000</div></div>
+      </div>
+      <div class="emp-item">
+        <div class="emp-avatar" style="background:#555">LF</div>
+        <div class="emp-info"><div class="emp-name">Luis Fernández</div><div class="emp-role">Peón de campo</div></div>
+        <div class="emp-stats"><div class="emp-horas">54 hs</div><div class="emp-cobro">$70.000</div></div>
+      </div>
+    </div>
+
+    <!-- DETALLE (oculto) -->
+    <div id="emp-detalle" style="display:none">
+      <div class="card" style="text-align:center;padding:20px">
+        <div style="font-size:2.5rem;margin-bottom:8px">👷</div>
+        <div style="font-weight:800;font-size:1.1rem" id="det-nombre">—</div>
+        <div style="color:var(--text2);font-size:0.8rem;margin-top:4px" id="det-rol">—</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="stat-val white" id="det-hs">—</div><div class="stat-lbl">Horas</div></div>
+        <div class="stat"><div class="stat-val" id="det-ha">—</div><div class="stat-lbl">Hectáreas</div></div>
+        <div class="stat"><div class="stat-val green" id="det-total">—</div><div class="stat-lbl">Cobro total</div></div>
+      </div>
+      <div class="section-title">Desglose de pago</div>
+      <div class="pago-breakdown">
+        <div class="pago-row"><span>Jornal base (días trabajados)</span><span id="det-jornal">—</span></div>
+        <div class="pago-row"><span>Bonificación por hectárea</span><span id="det-bonus">—</span></div>
+        <div class="pago-row"><span>TOTAL A COBRAR</span><span id="det-cobro">—</span></div>
+      </div>
+      <div class="section-title" style="margin-top:14px">Asistencia — Abril</div>
+      <div class="stat-row">
+        <div class="stat"><div class="stat-val green">18</div><div class="stat-lbl">Días trabajados</div></div>
+        <div class="stat"><div class="stat-val red">2</div><div class="stat-lbl">Ausencias</div></div>
+        <div class="stat"><div class="stat-val white">1</div><div class="stat-lbl">Licencias</div></div>
+      </div>
+      <button class="btn-primary" style="margin-top:8px" onclick="setEmpTab('resumen',null)">← VOLVER AL LISTADO</button>
+    </div>
+
+    <!-- COBROS -->
+    <div id="emp-cobros" style="display:none">
+      <div class="section-title">Liquidación Abril 2025</div>
+      <div class="job-item"><div><div class="job-name">Miguel González</div><div class="job-meta">Jornal $35K + Bonus ha $60K</div></div><span class="job-badge badge-active">$95.000</span></div>
+      <div class="job-item"><div><div class="job-name">Carlos Rodríguez</div><div class="job-meta">Jornal $35K + Bonus ha $43K</div></div><span class="job-badge badge-active">$78.000</span></div>
+      <div class="job-item"><div><div class="job-name">Juan Pérez</div><div class="job-meta">Jornal $35K + Viajes $37K</div></div><span class="job-badge badge-active">$72.000</span></div>
+      <div class="job-item"><div><div class="job-name">Roberto Alvarez</div><div class="job-meta">Jornal $35K + adicionales $30K</div></div><span class="job-badge badge-pending">$65.000</span></div>
+      <div class="job-item"><div><div class="job-name">Luis Fernández</div><div class="job-meta">Jornal $35K + adicionales $35K</div></div><span class="job-badge badge-pending">$70.000</span></div>
+      <div class="card" style="margin-top:8px">
+        <div class="pago-row" style="display:flex;justify-content:space-between;font-size:0.9rem;padding:8px 0">
+          <span>TOTAL LIQUIDACIÓN ABRIL</span>
+          <span style="color:var(--jd-yellow);font-weight:800">$380.000</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-item" onclick="showScreen('dashboard-admin')"><div class="nav-icon">📊</div><div class="nav-label">Dashboard</div></button>
+    <button class="nav-item active"><div class="nav-icon">👷</div><div class="nav-label">Personal</div></button>
+    <button class="nav-item" onclick="showScreen('maquinas')"><div class="nav-icon">🚜</div><div class="nav-label">Flota</div></button>
+    <button class="nav-item" onclick="showScreen('perfil')"><div class="nav-icon">⚙️</div><div class="nav-label">Config</div></button>
+  </div>
+</div>
+
+<!-- ════════════════ MAQUINAS ════════════════ -->
+<div id="maquinas" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">🚜</div>
+      <div><div class="topbar-title">Flota y Máquinas</div><div class="topbar-sub">Stepanosky Hermanos</div></div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="stat-row">
+      <div class="stat"><div class="stat-val white">5</div><div class="stat-lbl">Total</div></div>
+      <div class="stat"><div class="stat-val green">2</div><div class="stat-lbl">Activas</div></div>
+      <div class="stat"><div class="stat-val" style="color:var(--text2)">3</div><div class="stat-lbl">Inactivas</div></div>
+    </div>
+    <div class="section-title">Cosechadoras</div>
+    <div class="job-item"><div><div class="job-name">🌾 John Deere S760</div><div class="job-meta">Cabezal: 35m · Soja / Maíz / Trigo · Op: Miguel G.</div></div><span class="job-badge badge-active">ACTIVA</span></div>
+    <div class="section-title">Tractores</div>
+    <div class="job-item"><div><div class="job-name">🚜 Case IH Magnum 150</div><div class="job-meta">Monotolva · Siembra y fumigación</div></div><span class="job-badge badge-done">INACTIVO</span></div>
+    <div class="job-item"><div><div class="job-name">🚜 New Holland T6.180</div><div class="job-meta">Pulverizadora 28m</div></div><span class="job-badge badge-done">INACTIVO</span></div>
+    <div class="section-title">Camiones</div>
+    <div class="job-item yellow-border"><div><div class="job-name">🚛 Camión 125 — AA 123 BB</div><div class="job-meta">Cap: 28t · Habilitado CPE · Op: Juan P.</div></div><span class="job-badge badge-active">EN RUTA</span></div>
+    <div class="job-item"><div><div class="job-name">🚛 Camión 320 — AC 456 CD</div><div class="job-meta">Cap: 32t · Habilitado CPE</div></div><span class="job-badge badge-done">INACTIVO</span></div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-item" id="maq-home"><div class="nav-icon">📊</div><div class="nav-label">Dashboard</div></button>
+    <button class="nav-item" onclick="showScreen('personal')"><div class="nav-icon">👷</div><div class="nav-label">Personal</div></button>
+    <button class="nav-item active"><div class="nav-icon">🚜</div><div class="nav-label">Flota</div></button>
+    <button class="nav-item" onclick="showScreen('perfil')"><div class="nav-icon">⚙️</div><div class="nav-label">Config</div></button>
+  </div>
+</div>
+
+<!-- ════════════════ PERFIL ════════════════ -->
+<div id="perfil" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">⚙️</div>
+      <div><div class="topbar-title">Perfil</div><div class="topbar-sub">Stepanosky Hermanos</div></div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="perf-hero">
+      <div style="font-size:3rem;margin-bottom:8px">👤</div>
+      <div style="font-weight:800;font-size:1.1rem" id="perfil-nombre">—</div>
+      <div style="color:rgba(255,255,255,0.65);font-size:0.82rem;margin-top:4px" id="perfil-rol">—</div>
+      <div style="color:var(--jd-yellow);font-size:0.75rem;margin-top:8px;font-weight:700">● Sesión activa</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Empresa</div>
+      <div style="font-weight:700">Stepanosky Hermanos</div>
+      <div style="color:var(--text2);font-size:0.82rem;margin-top:4px">CUIT: 30-12345678-9</div>
+      <div style="color:var(--text2);font-size:0.82rem">Zona: Buenos Aires · Trenque Lauquen</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Sincronización</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-size:0.85rem;font-weight:600">Última sync</div><div style="color:var(--text2);font-size:0.75rem">Hace 3 minutos</div></div>
+        <span class="badge badge-online">● ONLINE</span>
+      </div>
+    </div>
+    <button class="btn-red" style="margin-top:8px" onclick="logout()">CERRAR SESIÓN</button>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-item" id="perf-home"><div class="nav-icon">📊</div><div class="nav-label">Dashboard</div></button>
+    <button class="nav-item" onclick="showScreen('personal')"><div class="nav-icon">👷</div><div class="nav-label">Personal</div></button>
+    <button class="nav-item" onclick="showScreen('maquinas')"><div class="nav-icon">🚜</div><div class="nav-label">Flota</div></button>
+    <button class="nav-item active"><div class="nav-icon">⚙️</div><div class="nav-label">Config</div></button>
+  </div>
+</div>
+
+<script>
+let role='admin',svcActive=false,timerInt=null,haInt=null,secs=0,ha=0,tons=0,cargas=0;
+
+function selectRole(r,el){
+  role=r;
+  document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function doLogin(){
+  const isAdmin=role==='admin';
+  document.getElementById('perfil-nombre').textContent=isAdmin?'Roberto Stepanosky':'Miguel González';
+  document.getElementById('perfil-rol').textContent=isAdmin?'Administrador':'Operador de Campo';
+  document.getElementById('maq-home').onclick=()=>showScreen(isAdmin?'dashboard-admin':'dashboard-op');
+  document.getElementById('perf-home').onclick=()=>showScreen(isAdmin?'dashboard-admin':'dashboard-op');
+  showScreen(isAdmin?'dashboard-admin':'dashboard-op');
+}
+
+function logout(){stopTimers();showScreen('login');}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goToServicio(){
+  showScreen('servicio');
+  if(!svcActive)startServicio();
+}
+
+function startServicio(){
+  svcActive=true; secs=0;
+  timerInt=setInterval(()=>{secs++;document.getElementById('timer').textContent=fmt(secs);},1000);
+  haInt=setInterval(()=>{ha+=0.012;document.getElementById('ha-counter').textContent=ha.toFixed(2);},1000);
+  setTimeout(()=>{
+    const b=document.getElementById('serv-sync');
+    b.textContent='● ONLINE'; b.className='badge badge-online';
+  },4000);
+}
+
+function stopServicio(){
+  if(!confirm(`¿Detener servicio?\n\nHectáreas: ${ha.toFixed(2)} ha\nCargas: ${cargas}\nToneladas: ${tons} t`))return;
+  stopTimers(); svcActive=false;
+  ha=0;tons=0;cargas=0;secs=0;
+  ['ha-counter','ton-counter','carga-counter'].forEach(id=>document.getElementById(id).textContent=id==='ha-counter'?'0.00':'0');
+  document.getElementById('timer').textContent='00:00:00';
+  showScreen(role==='admin'?'dashboard-admin':'dashboard-op');
+}
+
+function stopTimers(){clearInterval(timerInt);clearInterval(haInt);}
+function fmt(s){
+  const h=Math.floor(s/3600).toString().padStart(2,'0');
+  const m=Math.floor((s%3600)/60).toString().padStart(2,'0');
+  return `${h}:${m}:${(s%60).toString().padStart(2,'0')}`;
+}
+
+function openModal(t){document.getElementById('modal-'+t).classList.add('open');}
+function closeModal(t){document.getElementById('modal-'+t).classList.remove('open');}
+
+function checkHumedad(v){document.getElementById('hum-alert').classList.toggle('show',parseFloat(v)>14.5);}
+
+function guardarCarga(){
+  const t=parseFloat(document.getElementById('toneladas').value)||0;
+  if(t<=0){alert('Ingresá las toneladas');return;}
+  cargas++;tons+=t;
+  document.getElementById('carga-counter').textContent=cargas;
+  document.getElementById('ton-counter').textContent=tons.toFixed(0);
+  closeModal('carga');
+  ['toneladas','humedad','combustible','ticket','obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('hum-alert').classList.remove('show');
+  ['prev-balanza','prev-combustible'].forEach(id=>{const el=document.getElementById(id);el.style.display='none';el.src='';});
+  ['icon-balanza','icon-combustible'].forEach(id=>document.getElementById(id).style.display='');
+}
+
+function guardarCPE(){
+  const pat=document.getElementById('cpe-patente').value;
+  if(!pat){alert('Ingresá la patente del camión');return;}
+  alert('CPE guardada correctamente.\nPendiente envío a AFIP cuando haya conexión.');
+  closeModal('cpe');
+}
+
+function triggerFoto(id){document.getElementById(id).click();}
+
+function previewFoto(input,prevId){
+  const file=input.files[0]; if(!file)return;
+  const iconId=prevId.replace('prev-','icon-');
+  const r=new FileReader();
+  r.onload=e=>{
+    const img=document.getElementById(prevId);
+    img.src=e.target.result; img.style.display='block';
+    document.getElementById(iconId).style.display='none';
+  };
+  r.readAsDataURL(file);
+}
+
+// Personal tabs
+function setEmpTab(tab, el){
+  ['resumen','detalle','cobros'].forEach(t=>{
+    document.getElementById('emp-'+t).style.display=t===tab?'block':'none';
+  });
+  if(el){
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    el.classList.add('active');
+  }
+}
+
+function showEmpDetalle(nombre,rol,hs,haE,total,jornal,bonus){
+  document.getElementById('det-nombre').textContent=nombre;
+  document.getElementById('det-rol').textContent=rol;
+  document.getElementById('det-hs').textContent=hs;
+  document.getElementById('det-ha').textContent=haE;
+  document.getElementById('det-total').textContent=total;
+  document.getElementById('det-jornal').textContent=jornal;
+  document.getElementById('det-bonus').textContent=bonus;
+  document.getElementById('det-cobro').textContent=total;
+  setEmpTab('detalle',null);
+  document.querySelectorAll('.tab-btn')[1].classList.add('active');
+  document.querySelectorAll('.tab-btn')[0].classList.remove('active');
+}
+</script>
+</body>
+</html>
