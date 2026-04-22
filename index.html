@@ -721,7 +721,19 @@ function guardarCPE(){
   closeModal('cpe');
 }
 
-function triggerFoto(id){document.getElementById(id).click();}
+function triggerFoto(id){
+  // Safari iOS: el input debe ser visible y tocado directamente
+  const inp=document.getElementById(id);
+  inp.style.position='relative';
+  inp.style.opacity='1';
+  inp.style.zIndex='10';
+  inp.click();
+  setTimeout(()=>{
+    inp.style.position='absolute';
+    inp.style.opacity='0';
+    inp.style.zIndex='2';
+  },500);
+}
 
 function previewFoto(input,prevId){
   const file=input.files[0]; if(!file)return;
