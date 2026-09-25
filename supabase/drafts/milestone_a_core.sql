@@ -97,7 +97,7 @@ create table public.agricultural_operations (
   organization_id uuid not null references public.organizations(id),
   field_id uuid not null,
   campaign_id uuid not null,
-  crop_code text not null,
+  crop_code text not null check (char_length(trim(crop_code)) > 0),
   operation_type text not null check (operation_type in ('harvest')),
   planned_area_ha numeric(12,3) not null check (planned_area_ha > 0),
   planned_from timestamptz not null,
@@ -191,8 +191,14 @@ create table public.command_receipts (
   actor_user_id uuid not null references auth.users(id),
   device_id text not null,
   command_type text not null,
+  command_hash text not null check (char_length(command_hash) = 64),
   target_ref text,
   base_revision integer,
+  conflict_class text not null check (conflict_class in ('A','B','C','D','E')),
+  dependencies uuid[] not null default '{}',
+  schema_version integer not null default 1 check (schema_version > 0),
+  occurred_at_local timestamptz not null,
+  queued_at_local timestamptz not null,
   status text not null check (
     status in ('accepted','duplicate','conflict','rejected','blocked_dependency','pending_external')
   ),
