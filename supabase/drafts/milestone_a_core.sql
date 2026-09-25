@@ -298,6 +298,26 @@ grant select on table
   public.sync_conflicts
 to authenticated;
 
+grant usage on schema public to service_role;
+
+grant select, insert, update, delete on table
+  public.organizations,
+  public.organization_memberships,
+  public.parties,
+  public.organization_parties,
+  public.establishments,
+  public.fields,
+  public.campaigns,
+  public.equipment,
+  public.agricultural_operations,
+  public.operational_teams,
+  public.team_assignments,
+  public.contractor_jobs,
+  public.work_sessions,
+  public.command_receipts,
+  public.sync_conflicts
+to service_role;
+
 create policy memberships_self_select
 on public.organization_memberships
 for select
