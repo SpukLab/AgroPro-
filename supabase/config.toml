@@ -1,2 +1,5 @@
 [functions.sync-command]
 verify_jwt = true
+
+[functions.bootstrap-organization]
+verify_jwt = true
