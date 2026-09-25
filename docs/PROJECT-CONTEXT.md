@@ -1,12 +1,14 @@
-# AGROPRO — Project Context
+# SURKARA — Project Context
+
+> **Naming:** SURKARA es el nombre de producto de trabajo. El repositorio conserva temporalmente el nombre técnico heredado `SpukLab/AgroPro-` hasta completar las verificaciones formales de marca, denominación/fonética y dominios antes de consolidar branding o lanzamiento.
 
 **Última actualización:** 2026-09-24  
-**Estado:** definición de dominio / pre-arquitectura  
+**Estado:** Domain Blueprint v0.3 stress-tested / derivación arquitectónica  
 **Repositorio:** SpukLab/AgroPro-
 
 ## 1. Propósito
 
-AGROPRO apunta a ser una **plataforma operacional agropecuaria de punta a punta**, no solamente una app de cosecha ni un ERP administrativo.
+SURKARA apunta a ser una **plataforma operacional agropecuaria de punta a punta**, no solamente una app de cosecha ni un ERP administrativo.
 
 Patrón rector:
 
@@ -30,7 +32,7 @@ No almacenar claves o secretos en esta documentación.
 
 ## 3. Alcance estratégico
 
-AGROPRO no debe limitarse al contratista de cosecha. El objetivo es cubrir operaciones productivas completas, incluyendo:
+SURKARA no debe limitarse al contratista de cosecha. El objetivo es cubrir operaciones productivas completas, incluyendo:
 
 ### Agricultura
 - campos, lotes y ambientes;
@@ -129,7 +131,9 @@ AGROPRO no debe limitarse al contratista de cosecha. El objetivo es cubrir opera
 
 ## 4. Decisiones de dominio vigentes
 
-La fuente principal es [Domain Blueprint v0.2](DOMAIN-BLUEPRINT-v0.2.md).
+La fuente principal es [Domain Blueprint v0.3](DOMAIN-BLUEPRINT-v0.3.md), validado por [Domain Stress Test v0.1](DOMAIN-STRESS-TEST-v0.1.md).
+
+v0.2 se conserva como historial de diseño, no como canon vigente.
 
 Principios ya adoptados:
 
@@ -146,6 +150,14 @@ Principios ya adoptados:
 11. Una operación puede usar un Operational Team compuesto.
 12. Field Deployment y Mobile Camp/Casilla son conceptos propios.
 13. Grain Transfer es explícito entre cosechadora, monotolva, camión, silo o silobolsa.
+14. Los vínculos entre dominios son referencias explícitas, sin copiar autoridad.
+15. Equipos, cuadrillas y asignaciones relevantes conservan vigencia temporal.
+16. GrainBatch preserva identidad/linaje del grano a través de transferencias.
+17. GrainReconciliation es una entidad de primer nivel.
+18. Las correcciones críticas preservan historia y procedencia.
+19. Documentos externos conservan lifecycle explícito y autoridad externa.
+20. Mutaciones offline requieren identidad estable e idempotencia.
+21. Downtime/WaitingTime puede identificar el recurso o dependencia bloqueante.
 
 ## 5. Unidad operativa de cosecha
 
@@ -260,7 +272,7 @@ Puede actuar como capa conversacional para:
 - borradores de comandos;
 - solicitudes estructuradas.
 
-AGROPRO conserva autoridad operacional.
+SURKARA conserva autoridad operacional.
 
 Las acciones sensibles requieren políticas explícitas y, cuando corresponda, confirmación humana.
 
@@ -276,11 +288,11 @@ La plataforma puede compartir primitivas con transporte general y, a futuro, mov
 - costos;
 - evidencias.
 
-No se debe diseñar AGROPRO como “Uber rural”. Compartir plataforma no implica compartir dominio, motor de despacho ni UX.
+No se debe diseñar SURKARA como “Uber rural”. Compartir plataforma no implica compartir dominio, motor de despacho ni UX.
 
 ## 10. Forgeworks
 
-**Forgeworks se registra como candidato futuro para una tarea de validación/desarrollo de AGROPRO cuando Forgeworks esté suficientemente testeado.**
+**Forgeworks se registra como candidato futuro para una tarea de validación/desarrollo de SURKARA cuando Forgeworks esté suficientemente testeado.**
 
 Uso potencial:
 - stress-test del Domain Blueprint;
@@ -290,25 +302,32 @@ Uso potencial:
 - auditoría de cambios;
 - evolución controlada del prototipo hacia una base sólida.
 
-Forgeworks **no es una dependencia actual** y no debe condicionar las decisiones de dominio de AGROPRO.
+Forgeworks **no es una dependencia actual** y no debe condicionar las decisiones de dominio de SURKARA.
 
 ## 11. Próximo hito
 
-Antes de diseñar tablas o reescribir el prototipo:
+El stress-test y Domain Blueprint v0.3 ya están completados.
 
-1. stress-test de los flujos obligatorios del Domain Blueprint;
-2. detectar entidades/fronteras faltantes;
-3. fijar Domain Blueprint v0.3;
-4. recién después definir arquitectura técnica y modelo de persistencia;
-5. construir el primer vertical slice de extremo a extremo.
+El siguiente bloque debe derivar arquitectura desde el dominio, en este orden:
+
+1. aggregate/ownership boundaries;
+2. contratos entre dominios;
+3. invariantes de persistencia;
+4. estrategia offline/sync y conflictos;
+5. arquitectura técnica mínima;
+6. modelo de persistencia;
+7. migración del prototipo por vertical slice.
+
+No iniciar una reescritura total del prototipo antes de fijar esos contratos.
 
 ## 12. Regla de continuidad
 
-Cuando se retome AGROPRO en otro chat o herramienta, usar en este orden:
+Cuando se retome SURKARA en otro chat o herramienta, usar en este orden:
 
 1. `docs/PROJECT-CONTEXT.md`
-2. `docs/DOMAIN-BLUEPRINT-v0.2.md`
-3. `docs/RESEARCH-SYNTHESIS-2026-09-24.md`
-4. prototipo actual `index.html`
+2. `docs/DOMAIN-BLUEPRINT-v0.3.md`
+3. `docs/DOMAIN-STRESS-TEST-v0.1.md`
+4. `docs/RESEARCH-SYNTHESIS-2026-09-24.md`
+5. prototipo actual `index.html`
 
 No asumir que el prototipo representa la arquitectura objetivo.
