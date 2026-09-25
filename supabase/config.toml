@@ -1,0 +1,2 @@
+[functions.sync-command]
+verify_jwt = true

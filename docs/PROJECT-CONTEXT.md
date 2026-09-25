@@ -3,7 +3,7 @@
 > **Naming:** SURKARA es el nombre de producto de trabajo. El repositorio conserva temporalmente el nombre técnico heredado `SpukLab/AgroPro-` hasta completar las verificaciones formales de marca, denominación/fonética y dominios antes de consolidar branding o lanzamiento.
 
 **Última actualización:** 2026-09-24  
-**Estado:** Milestone A — offline/sync + contrato PostgreSQL validados / backend remoto pendiente  
+**Estado:** Milestone A — backend Supabase aislado activo + sync gateway desplegado  
 **Repositorio:** SpukLab/AgroPro-
 
 ## 1. Propósito
@@ -288,16 +288,17 @@ Documentos:
 
 ## 9. Persistencia y Supabase
 
-Existe un draft en `supabase/drafts/milestone_a_core.sql`.
+Proyecto Supabase SURKARA:
+- ref: `jfztusoibrhopxethefv`;
+- región: `sa-east-1`;
+- proyecto separado de `Spk_Multidev`;
+- Postgres 17;
+- RLS habilitado en todas las tablas públicas del Milestone A;
+- Security Advisor sin hallazgos;
+- `sync-command` desplegada con JWT obligatorio;
+- migraciones formales versionadas en `supabase/migrations/`.
 
-No está aplicado a ningún proyecto.
-
-Reglas:
-- no reutilizar el proyecto activo `Spk_Multidev`, porque contiene infraestructura de otro desarrollo;
-- no restaurar/modificar automáticamente el proyecto Supabase genérico inactivo;
-- SURKARA debe usar un proyecto aislado;
-- antes de crearlo se revisan costo y región;
-- el draft recién entonces se convierte en una migración formal y se valida con advisors.
+Las publishable keys pueden vivir en configuración pública del cliente; secret/service keys no se versionan ni se exponen.
 
 ## 10. DAHZEA
 
@@ -358,13 +359,12 @@ El código inicial de `app/` ya prueba:
 
 ## 13. Próximo hito
 
-1. cerrar Database Contract v0.1 con CI verde;
-2. aprovisionar Supabase exclusivo de SURKARA con confirmación de costo/región;
-3. convertir los drafts SQL validados en migraciones formales;
-4. aplicar migraciones y ejecutar advisors;
-5. implementar/desplegar `sync-command`;
-6. conectar el transport del cliente;
-7. ejecutar primer E2E real: create harvest operation offline → sync → authoritative read model.
+1. mergear el bootstrap Supabase reproducible;
+2. implementar Auth/onboarding en la PWA;
+3. crear la primera Organization + owner membership mediante backend autorizado;
+4. ejecutar E2E autenticado: create harvest operation offline → sync-command → PostgreSQL → read model;
+5. validar el flujo desde iPhone/iPad;
+6. recién después avanzar a Operational Team / WorkSession.
 
 ## 14. Regla de continuidad
 

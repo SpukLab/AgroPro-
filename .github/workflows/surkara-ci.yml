@@ -74,19 +74,21 @@ jobs:
       - name: Reject privileged function shortcuts
         shell: bash
         run: |
-          if grep -RniE 'security[[:space:]]+definer' supabase/drafts; then
-            echo "SECURITY DEFINER is not allowed in SURKARA drafts"
+          if grep -RniE 'security[[:space:]]+definer' supabase/migrations supabase/functions; then
+            echo "SECURITY DEFINER is not allowed in SURKARA migrations/functions"
             exit 1
           fi
 
       - name: Bootstrap Supabase auth roles
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/ci_bootstrap.sql
 
-      - name: Apply core persistence draft
-        run: psql -v ON_ERROR_STOP=1 -f supabase/drafts/milestone_a_core.sql
-
-      - name: Apply atomic command draft
-        run: psql -v ON_ERROR_STOP=1 -f supabase/drafts/process_create_harvest_operation.sql
+      - name: Apply versioned migrations
+        shell: bash
+        run: |
+          for migration in supabase/migrations/*.sql; do
+            echo "Applying $migration"
+            psql -v ON_ERROR_STOP=1 -f "$migration"
+          done
 
       - name: Run database contract tests
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/milestone_a_contract.sql
