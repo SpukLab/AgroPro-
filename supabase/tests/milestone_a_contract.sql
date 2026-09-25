@@ -206,7 +206,7 @@ begin
 end
 $$;
 
-do $
+do $$
 declare
   v_result jsonb;
 begin
@@ -234,9 +234,9 @@ begin
     raise exception 'onboarding owner membership was not created';
   end if;
 end
-$;
+$$;
 
-do $
+do $$
 declare
   v_result jsonb;
 begin
@@ -261,9 +261,9 @@ begin
     raise exception 'onboarding retry created duplicate receipt';
   end if;
 end
-$;
+$$;
 
-do $
+do $$
 declare
   v_result jsonb;
 begin
@@ -289,7 +289,7 @@ begin
     raise exception 'second onboarding unexpectedly created another organization';
   end if;
 end
-$;
+$$;
 
 reset role;
 
