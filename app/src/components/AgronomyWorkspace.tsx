@@ -61,7 +61,9 @@ export function AgronomyWorkspace({
   const [campaignName, setCampaignName] = useState(campaignDefaults.name);
   const [campaignStartsOn, setCampaignStartsOn] = useState(campaignDefaults.startsOn);
   const [campaignEndsOn, setCampaignEndsOn] = useState(campaignDefaults.endsOn);
-  const setupAttempt = useRef<{ fingerprint: string; attempt: SetupAgronomyAttempt }>();
+  const setupAttempt = useRef<
+    { fingerprint: string; attempt: SetupAgronomyAttempt } | undefined
+  >(undefined);
 
   async function refreshContext() {
     setContextBusy(true);
