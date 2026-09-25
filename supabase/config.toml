@@ -3,3 +3,6 @@ verify_jwt = true
 
 [functions.bootstrap-organization]
 verify_jwt = true
+
+[functions.setup-agronomy-context]
+verify_jwt = true
