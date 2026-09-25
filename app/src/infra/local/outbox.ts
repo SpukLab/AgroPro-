@@ -2,6 +2,11 @@ import { surkaraDb } from "./db";
 import type { OfflineCommand, OutboxRecord, OutboxStatus } from "../../domain/sync/types";
 
 const completedDependencyStatuses = new Set<OutboxStatus>(["accepted", "duplicate"]);
+const failedDependencyStatuses = new Set<OutboxStatus>([
+  "conflict",
+  "rejected",
+  "blocked_dependency"
+]);
 
 function invariantFingerprint(command: OfflineCommand): string {
   return JSON.stringify({
@@ -67,6 +72,51 @@ export async function getReadyPendingCommands(limit = 50): Promise<OutboxRecord[
   }
 
   return ready;
+}
+
+export async function recoverInterruptedSyncs(): Promise<number> {
+  const interrupted = await surkaraDb.outbox.where("status").equals("syncing").toArray();
+
+  if (interrupted.length === 0) return 0;
+
+  await surkaraDb.transaction("rw", surkaraDb.outbox, async () => {
+    for (const command of interrupted) {
+      await surkaraDb.outbox.update(command.clientOperationId, {
+        status: "pending",
+        lastError: "Recovered after interrupted sync"
+      });
+    }
+  });
+
+  return interrupted.length;
+}
+
+export async function markBlockedPendingCommands(): Promise<number> {
+  const pending = await surkaraDb.outbox.where("status").equals("pending").toArray();
+  let blocked = 0;
+
+  await surkaraDb.transaction("rw", surkaraDb.outbox, async () => {
+    for (const command of pending) {
+      if (command.dependencies.length === 0) continue;
+
+      const dependencies = await surkaraDb.outbox.bulkGet(command.dependencies);
+      const failedDependency = dependencies.find(
+        (dependency) =>
+          dependency !== undefined && failedDependencyStatuses.has(dependency.status)
+      );
+
+      if (!failedDependency) continue;
+
+      await surkaraDb.outbox.update(command.clientOperationId, {
+        status: "blocked_dependency",
+        lastError: `Dependency ${failedDependency.clientOperationId} ended as ${failedDependency.status}`,
+        processedAt: new Date().toISOString()
+      });
+      blocked += 1;
+    }
+  });
+
+  return blocked;
 }
 
 export async function markCommandSyncing(clientOperationId: string): Promise<void> {
