@@ -3,7 +3,7 @@
 > **Naming:** SURKARA es el nombre de producto de trabajo. El repositorio conserva temporalmente el nombre técnico heredado `SpukLab/AgroPro-` hasta completar las verificaciones formales de marca, denominación/fonética y dominios antes de consolidar branding o lanzamiento.
 
 **Última actualización:** 2026-09-24  
-**Estado:** Milestone A — offline core + Sync Engine / backend pendiente de proyecto aislado  
+**Estado:** Milestone A — offline/sync + contrato PostgreSQL validados / backend remoto pendiente  
 **Repositorio:** SpukLab/AgroPro-
 
 ## 1. Propósito
@@ -284,6 +284,7 @@ Documentos:
 - [Technical Stack v0.1](TECHNICAL-STACK-v0.1.md)
 - [Persistence Model v0.1](PERSISTENCE-MODEL-v0.1.md)
 - [Sync Gateway Contract v0.1](SYNC-GATEWAY-CONTRACT-v0.1.md)
+- [Database Contract v0.1](DATABASE-CONTRACT-v0.1.md)
 
 ## 9. Persistencia y Supabase
 
@@ -339,7 +340,10 @@ Ya están definidos:
 - estrategia tenancy/RLS;
 - Sync Engine cliente;
 - contrato del Sync Gateway;
-- CI base.
+- primer comando PostgreSQL atómico;
+- command fingerprint server-side;
+- contrato de base validado en PostgreSQL 17 efímero;
+- CI web + database-contract.
 
 El código inicial de `app/` ya prueba:
 - creación local de AgriculturalOperation;
@@ -354,13 +358,13 @@ El código inicial de `app/` ya prueba:
 
 ## 13. Próximo hito
 
-1. cerrar Sync Engine v0.1 con CI verde;
+1. cerrar Database Contract v0.1 con CI verde;
 2. aprovisionar Supabase exclusivo de SURKARA con confirmación de costo/región;
-3. convertir el SQL draft en migración formal;
-4. validar RLS/advisors;
-5. implementar transacción atómica del comando `agronomy.create_harvest_operation`;
-6. desplegar `sync-command`;
-7. ejecutar primer E2E: create harvest operation offline → sync → authoritative read model.
+3. convertir los drafts SQL validados en migraciones formales;
+4. aplicar migraciones y ejecutar advisors;
+5. implementar/desplegar `sync-command`;
+6. conectar el transport del cliente;
+7. ejecutar primer E2E real: create harvest operation offline → sync → authoritative read model.
 
 ## 14. Regla de continuidad
 
@@ -374,8 +378,9 @@ Cuando se retome SURKARA en otro chat o herramienta, usar en este orden:
 6. `docs/TECHNICAL-STACK-v0.1.md`
 7. `docs/PERSISTENCE-MODEL-v0.1.md`
 8. `docs/SYNC-GATEWAY-CONTRACT-v0.1.md`
-9. `docs/DOMAIN-STRESS-TEST-v0.1.md`
-10. `docs/RESEARCH-SYNTHESIS-2026-09-24.md`
-11. prototipo histórico `index.html`
+9. `docs/DATABASE-CONTRACT-v0.1.md`
+10. `docs/DOMAIN-STRESS-TEST-v0.1.md`
+11. `docs/RESEARCH-SYNTHESIS-2026-09-24.md`
+12. prototipo histórico `index.html`
 
 No asumir que el prototipo representa la arquitectura objetivo.
