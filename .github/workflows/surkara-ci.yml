@@ -1,0 +1,51 @@
+name: SURKARA CI
+
+on:
+  pull_request:
+    paths:
+      - "app/**"
+      - ".github/workflows/surkara-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - ".github/workflows/surkara-ci.yml"
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.16.0"
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Bootstrap lockfile
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload bootstrap lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: surkara-package-lock
+          path: app/package-lock.json
+          if-no-files-found: error
