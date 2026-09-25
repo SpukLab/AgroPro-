@@ -34,6 +34,8 @@ jobs:
         working-directory: app
         env:
           VITE_BASE_PATH: /AgroPro-/preview/
+          VITE_SUPABASE_URL: https://jfztusoibrhopxethefv.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_DFnUpFVGBttwZ0sQtbV5ug_Ssg2-LtQ
         run: npm run build
 
       - name: Verify preview paths
