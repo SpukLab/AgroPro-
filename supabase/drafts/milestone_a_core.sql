@@ -1,6 +1,12 @@
--- SURKARA Milestone A — persistence draft v0.1
+-- SURKARA Milestone A — persistence draft v0.2
 -- NOT APPLIED. Convert to a real Supabase migration only after provisioning
 -- an isolated SURKARA project and re-running the security review.
+--
+-- Core rules:
+-- 1. organization_id is the security/tenancy boundary, not business identity.
+-- 2. Party is global; OrganizationParty expresses contextual business relationships.
+-- 3. Cross-table tenant consistency is enforced with composite foreign keys.
+-- 4. Browser users receive read access only. Authoritative writes go through the Sync Gateway.
 
 create extension if not exists pgcrypto;
 
@@ -21,7 +27,6 @@ create table public.organization_memberships (
 
 create table public.parties (
   id uuid primary key default gen_random_uuid(),
-  organization_id uuid not null references public.organizations(id),
   party_type text not null check (party_type in ('person','organization')),
   display_name text not null check (char_length(trim(display_name)) > 0),
   external_ref text,
@@ -46,16 +51,20 @@ create table public.establishments (
   organization_id uuid not null references public.organizations(id),
   client_party_id uuid references public.parties(id),
   name text not null check (char_length(trim(name)) > 0),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (id, organization_id)
 );
 
 create table public.fields (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations(id),
-  establishment_id uuid not null references public.establishments(id),
+  establishment_id uuid not null,
   name text not null check (char_length(trim(name)) > 0),
   nominal_area_ha numeric(12,3) check (nominal_area_ha is null or nominal_area_ha > 0),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (id, organization_id),
+  foreign key (establishment_id, organization_id)
+    references public.establishments(id, organization_id)
 );
 
 create table public.campaigns (
@@ -65,6 +74,7 @@ create table public.campaigns (
   starts_on date,
   ends_on date,
   created_at timestamptz not null default now(),
+  unique (id, organization_id),
   check (ends_on is null or starts_on is null or ends_on >= starts_on)
 );
 
@@ -78,14 +88,15 @@ create table public.equipment (
   model text,
   serial_number text,
   active boolean not null default true,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (id, organization_id)
 );
 
 create table public.agricultural_operations (
   id uuid primary key,
   organization_id uuid not null references public.organizations(id),
-  field_id uuid not null references public.fields(id),
-  campaign_id uuid not null references public.campaigns(id),
+  field_id uuid not null,
+  campaign_id uuid not null,
   crop_code text not null,
   operation_type text not null check (operation_type in ('harvest')),
   planned_area_ha numeric(12,3) not null check (planned_area_ha > 0),
@@ -96,6 +107,11 @@ create table public.agricultural_operations (
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  unique (id, organization_id),
+  foreign key (field_id, organization_id)
+    references public.fields(id, organization_id),
+  foreign key (campaign_id, organization_id)
+    references public.campaigns(id, organization_id),
   check (planned_to >= planned_from)
 );
 
@@ -103,23 +119,30 @@ create table public.operational_teams (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations(id),
   name text not null check (char_length(trim(name)) > 0),
-  team_type text not null check (team_type in ('harvest','seeding','spraying','maintenance','other')),
+  team_type text not null check (
+    team_type in ('harvest','seeding','spraying','maintenance','other')
+  ),
   revision integer not null default 1 check (revision > 0),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique (id, organization_id)
 );
 
 create table public.team_assignments (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations(id),
-  operational_team_id uuid not null references public.operational_teams(id) on delete cascade,
+  operational_team_id uuid not null,
   party_id uuid references public.parties(id),
-  equipment_id uuid references public.equipment(id),
+  equipment_id uuid,
   role text not null,
   valid_from timestamptz not null,
   valid_to timestamptz,
   reason text,
   created_at timestamptz not null default now(),
+  foreign key (operational_team_id, organization_id)
+    references public.operational_teams(id, organization_id) on delete cascade,
+  foreign key (equipment_id, organization_id)
+    references public.equipment(id, organization_id),
   check ((party_id is not null) <> (equipment_id is not null)),
   check (valid_to is null or valid_to >= valid_from)
 );
@@ -127,20 +150,25 @@ create table public.team_assignments (
 create table public.contractor_jobs (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations(id),
-  agricultural_operation_id uuid not null references public.agricultural_operations(id),
+  agricultural_operation_id uuid not null,
   client_party_id uuid references public.parties(id),
-  operational_team_id uuid references public.operational_teams(id),
+  operational_team_id uuid,
   status text not null check (status in ('planned','ready','active','completed','cancelled')),
   revision integer not null default 1 check (revision > 0),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique (id, organization_id),
+  foreign key (agricultural_operation_id, organization_id)
+    references public.agricultural_operations(id, organization_id),
+  foreign key (operational_team_id, organization_id)
+    references public.operational_teams(id, organization_id)
 );
 
 create table public.work_sessions (
   id uuid primary key,
   organization_id uuid not null references public.organizations(id),
-  contractor_job_id uuid not null references public.contractor_jobs(id),
-  operational_team_id uuid references public.operational_teams(id),
+  contractor_job_id uuid not null,
+  operational_team_id uuid,
   started_at timestamptz not null,
   ended_at timestamptz,
   status text not null check (status in ('active','completed','cancelled')),
@@ -148,6 +176,11 @@ create table public.work_sessions (
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  unique (id, organization_id),
+  foreign key (contractor_job_id, organization_id)
+    references public.contractor_jobs(id, organization_id),
+  foreign key (operational_team_id, organization_id)
+    references public.operational_teams(id, organization_id),
   check (ended_at is null or ended_at >= started_at)
 );
 
@@ -166,13 +199,14 @@ create table public.command_receipts (
   result_json jsonb,
   error_code text,
   processed_at timestamptz not null default now(),
+  unique (id, organization_id),
   unique (organization_id, client_operation_id)
 );
 
 create table public.sync_conflicts (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations(id),
-  command_receipt_id uuid not null references public.command_receipts(id),
+  command_receipt_id uuid not null,
   conflict_class text not null check (conflict_class in ('A','B','C','D','E')),
   reason text not null,
   target_ref text,
@@ -180,23 +214,28 @@ create table public.sync_conflicts (
   server_revision integer,
   details jsonb,
   created_at timestamptz not null default now(),
-  resolved_at timestamptz
+  resolved_at timestamptz,
+  foreign key (command_receipt_id, organization_id)
+    references public.command_receipts(id, organization_id)
 );
 
 create index organization_memberships_user_idx
   on public.organization_memberships(user_id)
   where active;
 
-create index parties_org_idx on public.parties(organization_id);
+create index organization_parties_party_idx
+  on public.organization_parties(party_id, organization_id);
+
 create index establishments_org_idx on public.establishments(organization_id);
-create index fields_org_establishment_idx on public.fields(organization_id, establishment_id);
+create index fields_org_establishment_idx
+  on public.fields(organization_id, establishment_id);
 create index campaigns_org_idx on public.campaigns(organization_id);
 create index equipment_org_idx on public.equipment(organization_id);
 create index agricultural_operations_org_status_idx
   on public.agricultural_operations(organization_id, status);
 create index operational_teams_org_idx on public.operational_teams(organization_id);
 create index team_assignments_team_time_idx
-  on public.team_assignments(operational_team_id, valid_from);
+  on public.team_assignments(organization_id, operational_team_id, valid_from);
 create index contractor_jobs_org_status_idx
   on public.contractor_jobs(organization_id, status);
 create index work_sessions_org_status_idx
@@ -279,27 +318,31 @@ using (
   )
 );
 
-create policy parties_member_select
-on public.parties
-for select
-to authenticated
-using (
-  exists (
-    select 1 from public.organization_memberships m
-    where m.organization_id = parties.organization_id
-      and m.user_id = (select auth.uid())
-      and m.active
-  )
-);
-
 create policy organization_parties_member_select
 on public.organization_parties
 for select
 to authenticated
 using (
   exists (
-    select 1 from public.organization_memberships m
+    select 1
+    from public.organization_memberships m
     where m.organization_id = organization_parties.organization_id
+      and m.user_id = (select auth.uid())
+      and m.active
+  )
+);
+
+create policy parties_related_member_select
+on public.parties
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.organization_parties op
+    join public.organization_memberships m
+      on m.organization_id = op.organization_id
+    where op.party_id = parties.id
       and m.user_id = (select auth.uid())
       and m.active
   )
