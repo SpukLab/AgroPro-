@@ -46,17 +46,19 @@ Nunca llega al navegador.
 No representa por sí solo la relación de negocio.
 
 Se agregan explícitamente:
-- Party;
+- Party global;
 - OrganizationParty;
 - client/owner/provider roles contextuales.
+
+Party no contiene `organization_id`: una misma persona u organización puede participar en más de un tenant sin duplicar su identidad. La visibilidad se obtiene mediante OrganizationParty + membership.
 
 Ejemplo:
 
 ```text
 SURKARA tenant: Contratista A
-Party: Productor B
+Party global: Productor B
 OrganizationParty: Contratista A -> Productor B [client]
-Establishment: pertenece al contexto operativo, referencia Productor B
+Establishment: pertenece al tenant operativo y referencia Productor B
 ```
 
 ## 4. Tablas Milestone A
@@ -153,7 +155,9 @@ Milestone A:
 - `authenticated` recibe SELECT explícito;
 - no recibe INSERT/UPDATE/DELETE directo en aggregates;
 - las policies de SELECT requieren membership activo en la organización;
-- organization_memberships sólo permite al usuario leer sus propias memberships.
+- Party se hace visible sólo si existe una relación OrganizationParty alcanzable por el usuario;
+- organization_memberships sólo permite al usuario leer sus propias memberships;
+- las referencias entre tablas tenant-scoped usan claves compuestas `(id, organization_id)` para impedir asociaciones accidentales entre tenants.
 
 No se usa user_metadata para autorización.
 
@@ -164,9 +168,9 @@ El modelo no asume que:
 - tenant = propietario de la máquina;
 - tenant = cliente.
 
-Los owners/clientes se expresan con Party references.
+Los owners/clientes se expresan con Party references y relaciones OrganizationParty. La identidad Party puede reutilizarse entre organizaciones; los aggregates operativos siguen aislados por organization_id.
 
-Esto preserva el futuro multitenant sin volver ambiguo el aislamiento de seguridad.
+Esto preserva colaboración multiempresa sin volver ambiguo el aislamiento de seguridad.
 
 ## 9. Historial
 
