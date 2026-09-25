@@ -3,7 +3,7 @@
 > **Naming:** SURKARA es el nombre de producto de trabajo. El repositorio conserva temporalmente el nombre técnico heredado `SpukLab/AgroPro-` hasta completar las verificaciones formales de marca, denominación/fonética y dominios antes de consolidar branding o lanzamiento.
 
 **Última actualización:** 2026-09-24  
-**Estado:** Domain Blueprint v0.3 + Architecture Foundation v0.1 / listo para selección técnica  
+**Estado:** Milestone A — scaffold offline-first y persistencia candidata  
 **Repositorio:** SpukLab/AgroPro-
 
 ## 1. Propósito
@@ -20,13 +20,21 @@ Debe conectar agricultura, contratistas, maquinaria, cosecha, logística/transpo
 
 Cliente inicial de referencia: **Stepanosky Hermanos**, contratistas rurales de Trenque Lauquen, Buenos Aires.
 
-El proyecto existente nació como PWA mobile-first con un prototipo funcional en `index.html`. El prototipo se conserva como referencia de UX y de casos de uso, pero **no condiciona la arquitectura futura**.
+El repositorio contiene dos generaciones claramente separadas:
 
-Stack actual/prototipo:
+### Prototipo histórico
+- `index.html`;
 - HTML/CSS/JS vanilla;
-- Supabase (PostgreSQL + Auth + Storage);
-- GitHub Pages;
-- enfoque multi-tenant inicial mediante `organization_id`.
+- comportamiento principal simulado en memoria del navegador;
+- referencia útil de UX/casos de uso;
+- no constituye backend ni arquitectura objetivo.
+
+### Implementación nueva
+- `app/`;
+- React + TypeScript + Vite PWA;
+- Dexie/IndexedDB para offline y outbox;
+- Supabase como backend objetivo;
+- CI con typecheck, tests y build.
 
 No almacenar claves o secretos en esta documentación.
 
@@ -143,27 +151,26 @@ Principios ya adoptados:
 4. Offline-first es fundacional.
 5. Toda información crítica debe mantener procedencia.
 6. Datos medidos, estimados, calculados y corregidos deben distinguirse.
-7. `organization_id` por sí solo no alcanza para relaciones multiempresa.
-8. Documentos oficiales externos mantienen autoridad externa.
-9. Real-time se usa sólo cuando aporta valor operativo.
-10. DAHZEA nunca escribe directamente sobre datos críticos.
-11. Una operación puede usar un Operational Team compuesto.
-12. Field Deployment y Mobile Camp/Casilla son conceptos propios.
-13. Grain Transfer es explícito entre cosechadora, monotolva, camión, silo o silobolsa.
-14. Los vínculos entre dominios son referencias explícitas, sin copiar autoridad.
-15. Equipos, cuadrillas y asignaciones relevantes conservan vigencia temporal.
-16. GrainBatch preserva identidad/linaje del grano a través de transferencias.
-17. GrainReconciliation es una entidad de primer nivel.
-18. Las correcciones críticas preservan historia y procedencia.
-19. Documentos externos conservan lifecycle explícito y autoridad externa.
-20. Mutaciones offline requieren identidad estable e idempotencia.
-21. Downtime/WaitingTime puede identificar el recurso o dependencia bloqueante.
+7. `organization_id` es límite de seguridad, pero no sustituye relaciones multiempresa.
+8. Party es una identidad compartible; OrganizationParty expresa relaciones contextuales.
+9. Documentos oficiales externos mantienen autoridad externa.
+10. Real-time se usa sólo cuando aporta valor operativo.
+11. DAHZEA nunca escribe directamente sobre datos críticos.
+12. Una operación puede usar un Operational Team compuesto.
+13. Field Deployment y Mobile Camp/Casilla son conceptos propios.
+14. Grain Transfer es explícito entre cosechadora, monotolva, camión, silo o silobolsa.
+15. Los vínculos entre dominios son referencias explícitas, sin copiar autoridad.
+16. Equipos, cuadrillas y asignaciones relevantes conservan vigencia temporal.
+17. GrainBatch preserva identidad/linaje del grano a través de transferencias.
+18. GrainReconciliation es una entidad de primer nivel.
+19. Las correcciones críticas preservan historia y procedencia.
+20. Documentos externos conservan lifecycle explícito y autoridad externa.
+21. Mutaciones offline requieren identidad estable e idempotencia.
+22. Downtime/WaitingTime puede identificar el recurso o dependencia bloqueante.
 
 ## 5. Unidad operativa de cosecha
 
 La unidad real no es una cosechadora aislada.
-
-Ejemplo típico:
 
 ```text
 Harvest Team
@@ -176,8 +183,6 @@ Harvest Team
 ```
 
 La monotolva desacopla cosecha y transporte y debe formar parte explícita del flujo.
-
-Cadena típica:
 
 ```text
 Lote
@@ -212,13 +217,9 @@ Debe poder vincular:
 - proveedores locales;
 - rotaciones y reemplazos.
 
-Esto refleja el trabajo de equipos “tanteros” y cuadrillas que permanecen lejos de su base durante semanas o meses.
-
-## 7. Primer vertical slice recomendado
+## 7. Primer vertical slice
 
 **Agricultura + Contractor Ops + Harvest & Grain + Transport + Field Support**
-
-Flujo objetivo:
 
 ```text
 Cliente
@@ -255,14 +256,48 @@ CPE
 ↓
 Descarga / ticket
 ↓
-Conciliación
+GrainReconciliation
 ↓
 Costo
 ↓
 Liquidación
 ```
 
-## 8. DAHZEA
+La especificación implementable está en [Vertical Slice 01 — Harvest v0.1](VERTICAL-SLICE-01-HARVEST-v0.1.md).
+
+## 8. Arquitectura técnica vigente
+
+Decisión inicial:
+- modular monolith lógico;
+- React + TypeScript + Vite PWA;
+- Dexie/IndexedDB como persistencia offline del cliente;
+- outbox propio con `client_operation_id` estable;
+- Supabase Postgres/Auth/Storage como backend;
+- Edge/Application API como Sync Gateway;
+- RLS en toda tabla expuesta;
+- navegador con publishable key únicamente;
+- Realtime como acelerador, nunca como autoridad ni sustituto del sync.
+
+Documentos:
+- [Architecture Foundation v0.1](ARCHITECTURE-FOUNDATION-v0.1.md)
+- [Offline & Sync Contract v0.1](OFFLINE-SYNC-CONTRACT-v0.1.md)
+- [Technical Stack v0.1](TECHNICAL-STACK-v0.1.md)
+- [Persistence Model v0.1](PERSISTENCE-MODEL-v0.1.md)
+
+## 9. Persistencia y Supabase
+
+Existe un draft en `supabase/drafts/milestone_a_core.sql`.
+
+No está aplicado a ningún proyecto.
+
+Reglas:
+- no reutilizar el proyecto activo `Spk_Multidev`, porque contiene infraestructura de otro desarrollo;
+- no restaurar/modificar automáticamente el proyecto Supabase genérico inactivo;
+- SURKARA debe usar un proyecto aislado;
+- antes de crearlo se revisan costo y región;
+- el draft recién entonces se convierte en una migración formal y se valida con advisors.
+
+## 10. DAHZEA
 
 DAHZEA es un producto separado.
 
@@ -276,55 +311,51 @@ SURKARA conserva autoridad operacional.
 
 Las acciones sensibles requieren políticas explícitas y, cuando corresponda, confirmación humana.
 
-## 9. Transporte general y movilidad
-
-La plataforma puede compartir primitivas con transporte general y, a futuro, movilidad/remises:
-- personas;
-- organizaciones;
-- vehículos;
-- asignaciones;
-- posición;
-- incidentes;
-- costos;
-- evidencias.
-
-No se debe diseñar SURKARA como “Uber rural”. Compartir plataforma no implica compartir dominio, motor de despacho ni UX.
-
-## 10. Forgeworks
+## 11. Forgeworks
 
 **Forgeworks se registra como candidato futuro para una tarea de validación/desarrollo de SURKARA cuando Forgeworks esté suficientemente testeado.**
 
-Uso potencial:
-- stress-test del Domain Blueprint;
-- derivación de arquitectura desde dominios ya validados;
-- generación de contratos y scaffolding;
-- verificación de invariantes;
-- auditoría de cambios;
-- evolución controlada del prototipo hacia una base sólida.
+Puede utilizarse posteriormente para:
+- stress-test;
+- generación/verificación de contratos;
+- scaffolding;
+- auditoría;
+- evolución controlada.
 
-Forgeworks **no es una dependencia actual** y no debe condicionar las decisiones de dominio de SURKARA.
+Forgeworks no es una dependencia actual.
 
-## 11. Próximo hito
+## 12. Estado de Milestone A
 
-Ya están completados:
-- Domain Stress Test v0.1;
-- Domain Blueprint v0.3;
-- Architecture Foundation v0.1;
-- Offline & Sync Contract v0.1;
-- Vertical Slice 01 — Harvest v0.1.
+Ya están definidos:
+- dominio v0.3;
+- aggregate/ownership boundaries;
+- contrato offline/sync;
+- vertical slice de cosecha;
+- stack técnico;
+- outbox local durable;
+- control de revisión inicial;
+- modelo de persistencia candidato;
+- estrategia tenancy/RLS;
+- CI base.
 
-El siguiente bloque debe:
+El código inicial de `app/` ya prueba:
+- creación local de AgriculturalOperation;
+- revisión optimista;
+- rechazo de revisiones obsoletas;
+- idempotencia del outbox;
+- dependencias entre comandos.
 
-1. seleccionar stack técnico mínimo;
-2. mapear aggregates a persistencia;
-3. definir tenancy/autorización;
-4. definir API/command/query surface;
-5. crear scaffolding del Milestone A;
-6. implementar E2E desde el comienzo.
+## 13. Próximo hito
 
-El prototipo actual de `index.html` es UI/mock funcional en memoria; no existe un backend legado que deba preservarse como autoridad.
+1. cerrar PR del scaffold con CI verde;
+2. diseñar Application API / Sync Gateway;
+3. definir contratos de comando Milestone A;
+4. aprovisionar Supabase exclusivo de SURKARA con confirmación de costo/región;
+5. convertir el SQL draft en migración;
+6. validar RLS/advisors;
+7. implementar primer flujo E2E: create harvest operation → sync → read model.
 
-## 12. Regla de continuidad
+## 14. Regla de continuidad
 
 Cuando se retome SURKARA en otro chat o herramienta, usar en este orden:
 
@@ -333,8 +364,10 @@ Cuando se retome SURKARA en otro chat o herramienta, usar en este orden:
 3. `docs/ARCHITECTURE-FOUNDATION-v0.1.md`
 4. `docs/OFFLINE-SYNC-CONTRACT-v0.1.md`
 5. `docs/VERTICAL-SLICE-01-HARVEST-v0.1.md`
-6. `docs/DOMAIN-STRESS-TEST-v0.1.md`
-7. `docs/RESEARCH-SYNTHESIS-2026-09-24.md`
-8. prototipo actual `index.html`
+6. `docs/TECHNICAL-STACK-v0.1.md`
+7. `docs/PERSISTENCE-MODEL-v0.1.md`
+8. `docs/DOMAIN-STRESS-TEST-v0.1.md`
+9. `docs/RESEARCH-SYNTHESIS-2026-09-24.md`
+10. prototipo histórico `index.html`
 
 No asumir que el prototipo representa la arquitectura objetivo.
