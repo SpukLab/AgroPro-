@@ -291,6 +291,120 @@ begin
 end
 $$;
 
+do $$
+declare
+  v_result jsonb;
+begin
+  v_result := public.process_setup_agronomy_context(
+    'abababab-abab-abab-abab-abababababab',
+    '30000000-0000-0000-0000-000000000010',
+    '33333333-3333-3333-3333-333333333333',
+    'device-c',
+    '44444444-4444-4444-4444-444444444444',
+    'Campo Principal',
+    '55555555-5555-5555-5555-555555555555',
+    'Lote 1',
+    180,
+    '66666666-6666-6666-6666-666666666666',
+    '2026/27',
+    '2026-07-01',
+    '2027-06-30',
+    '2026-09-25T10:00:00-03:00',
+    '2026-09-25T10:00:01-03:00',
+    1
+  );
+
+  if v_result ->> 'status' <> 'accepted' then
+    raise exception 'expected agronomy setup accepted, got %', v_result;
+  end if;
+
+  if not exists (
+    select 1 from public.fields
+    where id = '55555555-5555-5555-5555-555555555555'
+      and organization_id = 'abababab-abab-abab-abab-abababababab'
+      and nominal_area_ha = 180
+  ) then
+    raise exception 'agronomy field was not created';
+  end if;
+
+  if not exists (
+    select 1 from public.campaigns
+    where id = '66666666-6666-6666-6666-666666666666'
+      and organization_id = 'abababab-abab-abab-abab-abababababab'
+  ) then
+    raise exception 'agronomy campaign was not created';
+  end if;
+end
+$$;
+
+do $$
+declare
+  v_result jsonb;
+begin
+  v_result := public.process_setup_agronomy_context(
+    'abababab-abab-abab-abab-abababababab',
+    '30000000-0000-0000-0000-000000000010',
+    '33333333-3333-3333-3333-333333333333',
+    'device-c',
+    '44444444-4444-4444-4444-444444444444',
+    'Campo Principal',
+    '55555555-5555-5555-5555-555555555555',
+    'Lote 1',
+    180,
+    '66666666-6666-6666-6666-666666666666',
+    '2026/27',
+    '2026-07-01',
+    '2027-06-30',
+    '2026-09-25T10:00:00-03:00',
+    '2026-09-25T10:00:01-03:00',
+    1
+  );
+
+  if v_result ->> 'status' <> 'duplicate' then
+    raise exception 'expected agronomy setup duplicate, got %', v_result;
+  end if;
+
+  if (
+    select count(*)
+    from public.command_receipts
+    where organization_id = 'abababab-abab-abab-abab-abababababab'
+      and client_operation_id = '30000000-0000-0000-0000-000000000010'
+  ) <> 1 then
+    raise exception 'agronomy setup retry created duplicate receipt';
+  end if;
+end
+$$;
+
+do $$
+declare
+  v_result jsonb;
+begin
+  v_result := public.process_setup_agronomy_context(
+    'abababab-abab-abab-abab-abababababab',
+    '30000000-0000-0000-0000-000000000010',
+    '33333333-3333-3333-3333-333333333333',
+    'device-c',
+    '44444444-4444-4444-4444-444444444444',
+    'Campo Cambiado',
+    '55555555-5555-5555-5555-555555555555',
+    'Lote 1',
+    180,
+    '66666666-6666-6666-6666-666666666666',
+    '2026/27',
+    '2026-07-01',
+    '2027-06-30',
+    '2026-09-25T10:00:00-03:00',
+    '2026-09-25T10:00:01-03:00',
+    1
+  );
+
+  if v_result ->> 'status' <> 'rejected'
+     or v_result ->> 'errorCode' <> 'idempotency_key_reused' then
+    raise exception 'expected agronomy idempotency collision, got %', v_result;
+  end if;
+end
+$$;
+
 reset role;
 
 select set_config(
