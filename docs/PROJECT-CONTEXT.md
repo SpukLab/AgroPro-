@@ -3,7 +3,7 @@
 > **Naming:** SURKARA es el nombre de producto de trabajo. El repositorio conserva temporalmente el nombre técnico heredado `SpukLab/AgroPro-` hasta completar las verificaciones formales de marca, denominación/fonética y dominios antes de consolidar branding o lanzamiento.
 
 **Última actualización:** 2026-09-24  
-**Estado:** Domain Blueprint v0.3 stress-tested / derivación arquitectónica  
+**Estado:** Domain Blueprint v0.3 + Architecture Foundation v0.1 / listo para selección técnica  
 **Repositorio:** SpukLab/AgroPro-
 
 ## 1. Propósito
@@ -306,19 +306,23 @@ Forgeworks **no es una dependencia actual** y no debe condicionar las decisiones
 
 ## 11. Próximo hito
 
-El stress-test y Domain Blueprint v0.3 ya están completados.
+Ya están completados:
+- Domain Stress Test v0.1;
+- Domain Blueprint v0.3;
+- Architecture Foundation v0.1;
+- Offline & Sync Contract v0.1;
+- Vertical Slice 01 — Harvest v0.1.
 
-El siguiente bloque debe derivar arquitectura desde el dominio, en este orden:
+El siguiente bloque debe:
 
-1. aggregate/ownership boundaries;
-2. contratos entre dominios;
-3. invariantes de persistencia;
-4. estrategia offline/sync y conflictos;
-5. arquitectura técnica mínima;
-6. modelo de persistencia;
-7. migración del prototipo por vertical slice.
+1. seleccionar stack técnico mínimo;
+2. mapear aggregates a persistencia;
+3. definir tenancy/autorización;
+4. definir API/command/query surface;
+5. crear scaffolding del Milestone A;
+6. implementar E2E desde el comienzo.
 
-No iniciar una reescritura total del prototipo antes de fijar esos contratos.
+El prototipo actual de `index.html` es UI/mock funcional en memoria; no existe un backend legado que deba preservarse como autoridad.
 
 ## 12. Regla de continuidad
 
@@ -326,8 +330,11 @@ Cuando se retome SURKARA en otro chat o herramienta, usar en este orden:
 
 1. `docs/PROJECT-CONTEXT.md`
 2. `docs/DOMAIN-BLUEPRINT-v0.3.md`
-3. `docs/DOMAIN-STRESS-TEST-v0.1.md`
-4. `docs/RESEARCH-SYNTHESIS-2026-09-24.md`
-5. prototipo actual `index.html`
+3. `docs/ARCHITECTURE-FOUNDATION-v0.1.md`
+4. `docs/OFFLINE-SYNC-CONTRACT-v0.1.md`
+5. `docs/VERTICAL-SLICE-01-HARVEST-v0.1.md`
+6. `docs/DOMAIN-STRESS-TEST-v0.1.md`
+7. `docs/RESEARCH-SYNTHESIS-2026-09-24.md`
+8. prototipo actual `index.html`
 
 No asumir que el prototipo representa la arquitectura objetivo.
