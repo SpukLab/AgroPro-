@@ -11,7 +11,7 @@ describe("AgriculturalOperation", () => {
       id: "operation-1",
       fieldId: "field-1",
       campaignId: "campaign-1",
-      cropId: "soy",
+      cropCode: "soy",
       plannedAreaHa: 180,
       plannedFrom: "2026-09-24T10:00:00-03:00",
       plannedTo: "2026-09-25T18:00:00-03:00"
@@ -27,7 +27,7 @@ describe("AgriculturalOperation", () => {
       id: "operation-1",
       fieldId: "field-1",
       campaignId: "campaign-1",
-      cropId: "soy",
+      cropCode: "soy",
       plannedAreaHa: 180,
       plannedFrom: "2026-09-24T10:00:00-03:00",
       plannedTo: "2026-09-25T18:00:00-03:00"
