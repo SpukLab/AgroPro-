@@ -14,6 +14,7 @@ SURKARA es una plataforma operacional agropecuaria mobile-first orientada a cone
 - [Technical Stack v0.1](docs/TECHNICAL-STACK-v0.1.md) — React/TypeScript/Vite PWA + Dexie/IndexedDB + Supabase.
 - [Persistence Model v0.1](docs/PERSISTENCE-MODEL-v0.1.md) — tenancy, RLS, revisiones e idempotencia server-side.
 - [Sync Gateway Contract v0.1](docs/SYNC-GATEWAY-CONTRACT-v0.1.md) — protocolo cliente/backend, resultados, atomicidad e idempotencia.
+- [Database Contract v0.1](docs/DATABASE-CONTRACT-v0.1.md) — contrato PostgreSQL validado en CI, RLS, tenant isolation e idempotencia server-side.
 - [Domain Stress Test v0.1](docs/DOMAIN-STRESS-TEST-v0.1.md) — validación de los 17 flujos obligatorios y gaps resueltos.
 - [Research Synthesis — 2026-09-24](docs/RESEARCH-SYNTHESIS-2026-09-24.md) — síntesis de investigación y riesgos.
 - [Domain Blueprint v0.2](docs/DOMAIN-BLUEPRINT-v0.2.md) — versión histórica previa al stress test.
@@ -33,13 +34,13 @@ Base técnica:
 
 El `index.html` de la raíz se conserva como prototipo histórico de UX. No es la arquitectura ni el backend objetivo.
 
-El SQL de `supabase/drafts/` es diseño revisable y **no está aplicado a ningún proyecto Supabase**.
+El SQL de `supabase/drafts/` sigue sin aplicarse a ningún proyecto Supabase, pero ahora se compila y prueba contra PostgreSQL 17 efímero en CI.
 
 ## Orden recomendado para continuar
 
 1. Leer `docs/PROJECT-CONTEXT.md`.
 2. Revisar `docs/DOMAIN-BLUEPRINT-v0.3.md`.
 3. Revisar `docs/ARCHITECTURE-FOUNDATION-v0.1.md` y `docs/OFFLINE-SYNC-CONTRACT-v0.1.md`.
-4. Revisar `docs/TECHNICAL-STACK-v0.1.md`, `docs/PERSISTENCE-MODEL-v0.1.md` y `docs/SYNC-GATEWAY-CONTRACT-v0.1.md`.
+4. Revisar `docs/TECHNICAL-STACK-v0.1.md`, `docs/PERSISTENCE-MODEL-v0.1.md`, `docs/SYNC-GATEWAY-CONTRACT-v0.1.md` y `docs/DATABASE-CONTRACT-v0.1.md`.
 5. Continuar Milestone A desde `app/`, incluyendo el Sync Engine.
 6. Aprovisionar un proyecto Supabase exclusivo de SURKARA antes de convertir el draft SQL en migración real y desplegar el gateway.
