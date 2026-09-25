@@ -11,6 +11,9 @@ on:
       - "app/**"
       - ".github/workflows/surkara-ci.yml"
 
+permissions:
+  contents: write
+
 jobs:
   web:
     runs-on: ubuntu-latest
@@ -18,8 +21,10 @@ jobs:
       run:
         working-directory: app
     steps:
-      - name: Checkout
+      - name: Checkout PR branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -28,6 +33,20 @@ jobs:
 
       - name: Bootstrap lockfile
         run: npm install --package-lock-only --ignore-scripts
+
+      - name: Commit generated lockfile
+        working-directory: .
+        shell: bash
+        run: |
+          if git diff --quiet -- app/package-lock.json && git ls-files --error-unmatch app/package-lock.json >/dev/null 2>&1; then
+            echo "package-lock.json already committed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/package-lock.json
+          git commit -m "build: pin SURKARA dependencies"
+          git push origin HEAD:${{ github.head_ref || github.ref_name }}
 
       - name: Install
         run: npm ci
@@ -40,10 +59,3 @@ jobs:
 
       - name: Build
         run: npm run build
-
-      - name: Upload bootstrap lockfile
-        uses: actions/upload-artifact@v4
-        with:
-          name: surkara-package-lock
-          path: app/package-lock.json
-          if-no-files-found: error
