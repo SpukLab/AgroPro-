@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { AgronomyWorkspace } from "./components/AgronomyWorkspace";
 import {
   getCurrentSession,
   signInWithEmail,
@@ -42,6 +43,7 @@ export default function App() {
   const [pending, setPending] = useState(0);
   const [syncBusy, setSyncBusy] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string>();
+  const [syncVersion, setSyncVersion] = useState(0);
   const [online, setOnline] = useState(navigator.onLine);
   const [deviceId] = useState(getOrCreateDeviceId);
   const bootstrapAttempt = useRef<BootstrapAttempt | null>(null);
@@ -226,6 +228,7 @@ export default function App() {
     try {
       const result = await syncReadyCommands(createSupabaseSyncTransport());
       await refreshPending();
+      setSyncVersion((value) => value + 1);
       setSyncMessage(
         `Sync: ${result.accepted} aceptados · ${result.duplicate} duplicados · ${result.conflict} conflictos · ${result.technicalFailures} fallos técnicos`
       );
@@ -477,14 +480,15 @@ export default function App() {
         {syncMessage && <p className="message">{syncMessage}</p>}
       </section>
 
-      <section className="card next-card">
-        <span className="step">ONBOARDING · 2/2</span>
-        <h2>Contexto agronómico</h2>
-        <p>
-          El siguiente bloque crea establecimiento, lote y campaña para habilitar la
-          primera operación de cosecha real.
-        </p>
-      </section>
+      {activeOrganizationId && (
+        <AgronomyWorkspace
+          organizationId={activeOrganizationId}
+          actorId={session.user.id}
+          deviceId={deviceId}
+          syncVersion={syncVersion}
+          onPendingChanged={refreshPending}
+        />
+      )}
 
       <button className="button-secondary" onClick={() => void handleSignOut()}>
         Cerrar sesión
