@@ -1,3 +1,4 @@
+import { getEntityCache, putEntityCache } from "../../infra/local/cache";
 import { supabase } from "../../infra/supabase/client";
 
 export type OrganizationRole = "owner" | "admin" | "operator" | "viewer";
@@ -40,24 +41,43 @@ export function createBootstrapAttempt(name: string): BootstrapAttempt {
   };
 }
 
-export async function listOrganizationMemberships(): Promise<OrganizationMembership[]> {
+export async function listOrganizationMemberships(
+  userId: string
+): Promise<OrganizationMembership[]> {
   const client = requireSupabase();
-  const { data, error } = await client
-    .from("organization_memberships")
-    .select("organization_id, role, organizations!inner(name)")
-    .eq("active", true)
-    .order("created_at", { ascending: true });
+  const key = `organization-memberships:${userId}`;
 
-  if (error) throw error;
+  try {
+    const { data, error } = await client
+      .from("organization_memberships")
+      .select("organization_id, role, organizations!inner(name)")
+      .eq("active", true)
+      .order("created_at", { ascending: true });
 
-  return (data ?? []).map((row) => {
-    const organization = row.organizations as unknown as { name: string };
-    return {
-      organizationId: row.organization_id as string,
-      organizationName: organization.name,
-      role: row.role as OrganizationRole
-    };
-  });
+    if (error) throw error;
+
+    const memberships = (data ?? []).map((row) => {
+      const organization = row.organizations as unknown as { name: string };
+      return {
+        organizationId: row.organization_id as string,
+        organizationName: organization.name,
+        role: row.role as OrganizationRole
+      };
+    });
+
+    await putEntityCache(
+      key,
+      "organization-memberships",
+      userId,
+      memberships
+    );
+
+    return memberships;
+  } catch (error) {
+    const cached = await getEntityCache<OrganizationMembership[]>(key);
+    if (cached) return cached;
+    throw error;
+  }
 }
 
 export async function bootstrapOrganization(
