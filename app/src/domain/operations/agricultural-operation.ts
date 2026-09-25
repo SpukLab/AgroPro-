@@ -9,7 +9,7 @@ export interface AgriculturalOperation {
   id: string;
   fieldId: string;
   campaignId: string;
-  cropId: string;
+  cropCode: string;
   operationType: "harvest";
   plannedAreaHa: number;
   plannedFrom: string;
@@ -22,7 +22,7 @@ export interface CreateHarvestOperationInput {
   id?: string;
   fieldId: string;
   campaignId: string;
-  cropId: string;
+  cropCode: string;
   plannedAreaHa: number;
   plannedFrom: string;
   plannedTo: string;
@@ -58,7 +58,7 @@ export function createHarvestOperation(
     id: input.id ?? crypto.randomUUID(),
     fieldId: input.fieldId,
     campaignId: input.campaignId,
-    cropId: input.cropId,
+    cropCode: input.cropCode.trim().toUpperCase(),
     operationType: "harvest",
     plannedAreaHa: input.plannedAreaHa,
     plannedFrom: input.plannedFrom,

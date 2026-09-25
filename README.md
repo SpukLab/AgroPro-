@@ -29,6 +29,9 @@ Base técnica:
 - Supabase Postgres/Auth/Storage como backend objetivo;
 - Application API / Sync Gateway delante de mutaciones autoritativas;
 - Sync Engine cliente con recuperación de envíos interrumpidos, dependencias y reintentos;
+- Auth + onboarding de organización;
+- contexto agronómico cacheado para continuidad offline;
+- creación de operaciones de cosecha en outbox antes del sync;
 - Realtime sólo como acelerador de cambios confirmados;
 - Vitest + CI para typecheck, tests y build.
 
