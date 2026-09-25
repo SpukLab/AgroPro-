@@ -34,7 +34,7 @@ Base técnica:
 
 El `index.html` de la raíz se conserva como prototipo histórico de UX. No es la arquitectura ni el backend objetivo.
 
-El SQL de `supabase/drafts/` sigue sin aplicarse a ningún proyecto Supabase, pero ahora se compila y prueba contra PostgreSQL 17 efímero en CI.
+SURKARA ya dispone de un proyecto Supabase aislado (`jfztusoibrhopxethefv`, región `sa-east-1`). Las migraciones versionadas viven en `supabase/migrations/` y la Edge Function `sync-command` en `supabase/functions/`. Los drafts históricos se conservan sólo como diseño previo.
 
 ## Orden recomendado para continuar
 
@@ -43,4 +43,4 @@ El SQL de `supabase/drafts/` sigue sin aplicarse a ningún proyecto Supabase, pe
 3. Revisar `docs/ARCHITECTURE-FOUNDATION-v0.1.md` y `docs/OFFLINE-SYNC-CONTRACT-v0.1.md`.
 4. Revisar `docs/TECHNICAL-STACK-v0.1.md`, `docs/PERSISTENCE-MODEL-v0.1.md`, `docs/SYNC-GATEWAY-CONTRACT-v0.1.md` y `docs/DATABASE-CONTRACT-v0.1.md`.
 5. Continuar Milestone A desde `app/`, incluyendo el Sync Engine.
-6. Aprovisionar un proyecto Supabase exclusivo de SURKARA antes de convertir el draft SQL en migración real y desplegar el gateway.
+6. Continuar con Auth/onboarding y el primer E2E autenticado contra el proyecto Supabase de SURKARA.
