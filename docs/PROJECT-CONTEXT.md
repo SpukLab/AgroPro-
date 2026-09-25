@@ -3,7 +3,7 @@
 > **Naming:** SURKARA es el nombre de producto de trabajo. El repositorio conserva temporalmente el nombre técnico heredado `SpukLab/AgroPro-` hasta completar las verificaciones formales de marca, denominación/fonética y dominios antes de consolidar branding o lanzamiento.
 
 **Última actualización:** 2026-09-24  
-**Estado:** Milestone A — backend Supabase aislado activo + sync gateway desplegado  
+**Estado:** Milestone A — Auth/onboarding + backend Supabase activo  
 **Repositorio:** SpukLab/AgroPro-
 
 ## 1. Propósito
@@ -296,6 +296,8 @@ Proyecto Supabase SURKARA:
 - RLS habilitado en todas las tablas públicas del Milestone A;
 - Security Advisor sin hallazgos;
 - `sync-command` desplegada con JWT obligatorio;
+- `bootstrap-organization` desplegada con JWT obligatorio;
+- onboarding transaccional: primera Organization + membership owner;
 - migraciones formales versionadas en `supabase/migrations/`.
 
 Las publishable keys pueden vivir en configuración pública del cliente; secret/service keys no se versionan ni se exponen.
@@ -342,6 +344,7 @@ Ya están definidos:
 - Sync Engine cliente;
 - contrato del Sync Gateway;
 - primer comando PostgreSQL atómico;
+- onboarding de organización idempotente y transaccional;
 - command fingerprint server-side;
 - contrato de base validado en PostgreSQL 17 efímero;
 - CI web + database-contract.
@@ -359,12 +362,11 @@ El código inicial de `app/` ya prueba:
 
 ## 13. Próximo hito
 
-1. mergear el bootstrap Supabase reproducible;
-2. implementar Auth/onboarding en la PWA;
-3. crear la primera Organization + owner membership mediante backend autorizado;
-4. ejecutar E2E autenticado: create harvest operation offline → sync-command → PostgreSQL → read model;
-5. validar el flujo desde iPhone/iPad;
-6. recién después avanzar a Operational Team / WorkSession.
+1. cerrar Auth/onboarding v0.1 con CI verde;
+2. implementar setup agronómico mínimo: establecimiento + lote + campaña;
+3. ejecutar E2E autenticado: create harvest operation offline → sync-command → PostgreSQL → read model;
+4. validar el flujo desde iPhone/iPad;
+5. recién después avanzar a Operational Team / WorkSession.
 
 ## 14. Regla de continuidad
 
