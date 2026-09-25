@@ -61,7 +61,7 @@ export default function App() {
 
     setMembershipsLoading(true);
     try {
-      const next = await listOrganizationMemberships();
+      const next = await listOrganizationMemberships(session.user.id);
       setMemberships(next);
       setActiveOrganizationId((current) => {
         if (current && next.some((item) => item.organizationId === current)) {
