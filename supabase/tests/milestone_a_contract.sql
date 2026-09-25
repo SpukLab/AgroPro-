@@ -2,7 +2,8 @@
 
 insert into auth.users(id) values
   ('11111111-1111-1111-1111-111111111111'),
-  ('22222222-2222-2222-2222-222222222222');
+  ('22222222-2222-2222-2222-222222222222'),
+  ('33333333-3333-3333-3333-333333333333');
 
 insert into public.organizations(id, name) values
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Tenant A'),
@@ -204,6 +205,91 @@ begin
   end;
 end
 $$;
+
+do $
+declare
+  v_result jsonb;
+begin
+  v_result := public.process_bootstrap_organization(
+    '30000000-0000-0000-0000-000000000001',
+    '33333333-3333-3333-3333-333333333333',
+    'abababab-abab-abab-abab-abababababab',
+    'Nueva Empresa Rural',
+    '2026-09-25T09:00:00-03:00',
+    1
+  );
+
+  if v_result ->> 'status' <> 'accepted' then
+    raise exception 'expected onboarding accepted, got %', v_result;
+  end if;
+
+  if not exists (
+    select 1
+    from public.organization_memberships
+    where organization_id = 'abababab-abab-abab-abab-abababababab'
+      and user_id = '33333333-3333-3333-3333-333333333333'
+      and role = 'owner'
+      and active
+  ) then
+    raise exception 'onboarding owner membership was not created';
+  end if;
+end
+$;
+
+do $
+declare
+  v_result jsonb;
+begin
+  v_result := public.process_bootstrap_organization(
+    '30000000-0000-0000-0000-000000000001',
+    '33333333-3333-3333-3333-333333333333',
+    'abababab-abab-abab-abab-abababababab',
+    'Nueva Empresa Rural',
+    '2026-09-25T09:00:00-03:00',
+    1
+  );
+
+  if v_result ->> 'status' <> 'duplicate' then
+    raise exception 'expected onboarding duplicate, got %', v_result;
+  end if;
+
+  if (
+    select count(*)
+    from public.organization_bootstrap_receipts
+    where actor_user_id = '33333333-3333-3333-3333-333333333333'
+  ) <> 1 then
+    raise exception 'onboarding retry created duplicate receipt';
+  end if;
+end
+$;
+
+do $
+declare
+  v_result jsonb;
+begin
+  v_result := public.process_bootstrap_organization(
+    '30000000-0000-0000-0000-000000000002',
+    '33333333-3333-3333-3333-333333333333',
+    'acacacac-acac-acac-acac-acacacacacac',
+    'Otra Empresa',
+    '2026-09-25T09:01:00-03:00',
+    1
+  );
+
+  if v_result ->> 'status' <> 'rejected'
+     or v_result ->> 'errorCode' <> 'already_onboarded' then
+    raise exception 'expected already_onboarded rejection, got %', v_result;
+  end if;
+
+  if exists (
+    select 1
+    from public.organizations
+    where id = 'acacacac-acac-acac-acac-acacacacacac'
+  ) then
+    raise exception 'second onboarding unexpectedly created another organization';
+  end if;
+end
+$;
 
 reset role;
 
