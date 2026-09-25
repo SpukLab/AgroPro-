@@ -4,11 +4,13 @@ on:
   pull_request:
     paths:
       - "app/**"
+      - "supabase/**"
       - ".github/workflows/surkara-ci.yml"
   push:
     branches: [main]
     paths:
       - "app/**"
+      - "supabase/**"
       - ".github/workflows/surkara-ci.yml"
 
 jobs:
@@ -39,3 +41,52 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  database-contract:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PostgreSQL client
+        run: psql --version
+
+      - name: Reject privileged function shortcuts
+        shell: bash
+        run: |
+          if grep -RniE 'security[[:space:]]+definer' supabase/drafts; then
+            echo "SECURITY DEFINER is not allowed in SURKARA drafts"
+            exit 1
+          fi
+
+      - name: Bootstrap Supabase auth roles
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/ci_bootstrap.sql
+
+      - name: Apply core persistence draft
+        run: psql -v ON_ERROR_STOP=1 -f supabase/drafts/milestone_a_core.sql
+
+      - name: Apply atomic command draft
+        run: psql -v ON_ERROR_STOP=1 -f supabase/drafts/process_create_harvest_operation.sql
+
+      - name: Run database contract tests
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/milestone_a_contract.sql
