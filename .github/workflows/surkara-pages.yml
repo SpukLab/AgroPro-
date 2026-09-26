@@ -1,0 +1,102 @@
+name: SURKARA Pages
+
+on:
+  pull_request:
+    paths:
+      - "app/**"
+      - ".github/workflows/surkara-pages.yml"
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - ".github/workflows/surkara-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: surkara-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.16.0"
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install
+        working-directory: app
+        run: npm ci
+
+      - name: Build mobile preview
+        working-directory: app
+        env:
+          VITE_BASE_PATH: /AgroPro-/preview/
+        run: npm run build
+
+      - name: Verify static bundle
+        shell: bash
+        run: |
+          test -f app/dist/index.html
+          test -f app/dist/manifest.webmanifest
+          grep -q '/AgroPro-/preview/' app/dist/index.html
+          grep -q '/AgroPro-/preview/' app/dist/manifest.webmanifest
+
+          if grep -R -E -q 'sb_secret_[A-Za-z0-9_-]{16,}' app/dist; then
+            echo "Secret Supabase key detected in public bundle"
+            exit 1
+          fi
+
+          grep -R -E -q 'sb_publishable_[A-Za-z0-9_-]{16,}' app/dist
+
+      - name: Stage Pages artifact
+        shell: bash
+        run: |
+          rm -rf _site
+          mkdir -p _site/preview
+          cp -R app/dist/. _site/preview/
+          touch _site/.nojekyll
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="es">
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width,initial-scale=1">
+              <meta http-equiv="refresh" content="0; url=./preview/">
+              <title>SURKARA</title>
+            </head>
+            <body>
+              <a href="./preview/">Abrir SURKARA</a>
+            </body>
+          </html>
+          HTML
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
