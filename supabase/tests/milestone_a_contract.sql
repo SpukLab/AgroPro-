@@ -1,7 +1,7 @@
 -- SURKARA Milestone A database contract checks.
 
 -- Supabase hosts pgcrypto in the extensions schema. Keep CI aligned with production.
-do $
+do $surkara$
 declare
   v_schema text;
 begin
@@ -31,7 +31,7 @@ begin
     raise exception 'command function still references public.digest';
   end if;
 end
-$;
+$surkara$;
 
 insert into auth.users(id) values
   ('11111111-1111-1111-1111-111111111111'),
