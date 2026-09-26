@@ -2,8 +2,8 @@
 
 > **Naming:** SURKARA es el nombre de producto de trabajo. El repositorio conserva temporalmente el nombre técnico heredado `SpukLab/AgroPro-` hasta completar las verificaciones formales de marca, denominación/fonética y dominios antes de consolidar branding o lanzamiento.
 
-**Última actualización:** 2026-09-24  
-**Estado:** Milestone A — Auth + contexto agronómico + operación offline  
+**Última actualización:** 2026-09-25  
+**Estado:** Milestone A — backend live validado + preview PWA publicado; E2E físico pendiente  
 **Repositorio:** SpukLab/AgroPro-
 
 ## 1. Propósito
@@ -300,7 +300,11 @@ Proyecto Supabase SURKARA:
 - `setup-agronomy-context` desplegada con JWT obligatorio;
 - onboarding transaccional: primera Organization + membership owner;
 - contexto agronómico transaccional: establecimiento + lote + campaña;
-- migraciones formales versionadas en `supabase/migrations/`.
+- migraciones formales versionadas en `supabase/migrations/`;
+- `pgcrypto` normalizado al schema `extensions` para paridad con Supabase real;
+- migración live `20260926005115_surkara_pgcrypto_schema_fix` aplicada y versionada;
+- cadena backend validada en el proyecto real con `service_role`: bootstrap → contexto agronómico → operación de cosecha → lectura RLS;
+- pruebas live ejecutadas dentro de transacciones con rollback, sin dejar datos de test persistentes.
 
 Las publishable keys pueden vivir en configuración pública del cliente; secret/service keys no se versionan ni se exponen.
 
@@ -352,7 +356,10 @@ Ya están definidos:
 - creación de AgriculturalOperation en outbox offline;
 - command fingerprint server-side;
 - contrato de base validado en PostgreSQL 17 efímero;
-- CI web + database-contract.
+- CI web + database-contract;
+- paridad de schema `pgcrypto` protegida por regresión CI;
+- preview PWA publicado por GitHub Pages en `https://spuklab.github.io/AgroPro-/preview/`;
+- workflow Pages valida rutas PWA y rechaza tokens con formato `sb_secret_...` antes de publicar.
 
 El código inicial de `app/` ya prueba:
 - creación local de AgriculturalOperation;
@@ -367,11 +374,13 @@ El código inicial de `app/` ya prueba:
 
 ## 13. Próximo hito
 
-1. cerrar Agronomy Context v0.1 con CI verde;
-2. desplegar la PWA en un entorno accesible desde iPhone/iPad;
-3. ejecutar E2E autenticado real: signup/login → Organization → contexto → operación offline → sync-command → PostgreSQL → read model;
-4. validar recarga offline en iPhone/iPad;
+1. abrir el preview publicado desde iPhone/iPad;
+2. ejecutar E2E interactivo real: signup/login → Organization → contexto → operación offline → sync-command → PostgreSQL → read model;
+3. validar recarga offline / PWA instalada en iPhone/iPad;
+4. registrar cualquier diferencia de Safari/iOS respecto del contrato ya validado en backend;
 5. recién después avanzar a Operational Team / WorkSession.
+
+La validación backend live y la publicación Pages ya no son pendientes. Ver [Milestone A — Live Validation 2026-09-25](MILESTONE-A-LIVE-VALIDATION-2026-09-25.md).
 
 ## 14. Regla de continuidad
 
