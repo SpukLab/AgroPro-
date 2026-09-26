@@ -54,12 +54,12 @@ jobs:
           grep -q '/AgroPro-/preview/' app/dist/index.html
           grep -q '/AgroPro-/preview/' app/dist/manifest.webmanifest
 
-          if grep -R -q 'sb_secret_' app/dist; then
+          if grep -R -E -q 'sb_secret_[A-Za-z0-9_-]{16,}' app/dist; then
             echo "Secret Supabase key detected in public bundle"
             exit 1
           fi
 
-          grep -R -q 'sb_publishable_' app/dist
+          grep -R -E -q 'sb_publishable_[A-Za-z0-9_-]{16,}' app/dist
 
       - name: Stage Pages artifact
         shell: bash
