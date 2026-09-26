@@ -1,5 +1,38 @@
 -- SURKARA Milestone A database contract checks.
 
+-- Supabase hosts pgcrypto in the extensions schema. Keep CI aligned with production.
+do $
+declare
+  v_schema text;
+begin
+  select n.nspname
+    into v_schema
+    from pg_extension e
+    join pg_namespace n on n.oid = e.extnamespace
+   where e.extname = 'pgcrypto';
+
+  if v_schema <> 'extensions' then
+    raise exception 'pgcrypto schema drift: expected extensions, got %', v_schema;
+  end if;
+
+  if exists (
+    select 1
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public'
+       and p.prokind = 'f'
+       and p.proname in (
+         'process_bootstrap_organization',
+         'process_create_harvest_operation',
+         'process_setup_agronomy_context'
+       )
+       and p.prosrc like '%public.digest(%'
+  ) then
+    raise exception 'command function still references public.digest';
+  end if;
+end
+$;
+
 insert into auth.users(id) values
   ('11111111-1111-1111-1111-111111111111'),
   ('22222222-2222-2222-2222-222222222222'),
