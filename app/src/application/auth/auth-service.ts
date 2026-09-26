@@ -28,6 +28,10 @@ export async function signInWithEmail(
   return data.session;
 }
 
+export function buildAuthRedirectUrl(origin: string, baseUrl: string): string {
+  return new URL(baseUrl, origin).toString();
+}
+
 export async function signUpWithEmail(
   email: string,
   password: string
@@ -35,7 +39,13 @@ export async function signUpWithEmail(
   const client = requireSupabase();
   const { data, error } = await client.auth.signUp({
     email: email.trim(),
-    password
+    password,
+    options: {
+      emailRedirectTo: buildAuthRedirectUrl(
+        window.location.origin,
+        import.meta.env.BASE_URL
+      )
+    }
   });
 
   if (error) throw error;
