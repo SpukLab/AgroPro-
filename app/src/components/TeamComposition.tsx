@@ -101,6 +101,8 @@ export function TeamComposition({
   const [composition, setComposition] = useState<TeamCompositionItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [endingAssignmentId, setEndingAssignmentId] = useState<string>();
+  const [finalizationTarget, setFinalizationTarget] = useState<TeamCompositionItem>();
+  const [finalizationAt, setFinalizationAt] = useState(localDateTimeInput(new Date()));
   const [rotationTarget, setRotationTarget] = useState<TeamCompositionItem>();
   const [replacementName, setReplacementName] = useState("");
   const [replacementAt, setReplacementAt] = useState(localDateTimeInput(new Date()));
@@ -164,10 +166,12 @@ export function TeamComposition({
     }
   }, [selected?.teamId, syncVersion]);
 
-  async function handleEndAssignment(item: TeamCompositionItem) {
-    if (!selected || item.validTo || endingAssignmentId) return;
+  async function handleEndAssignment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const item = finalizationTarget;
+    if (!selected || !item || item.validTo || endingAssignmentId) return;
 
-    const validTo = new Date().toISOString();
+    const validTo = new Date(finalizationAt).toISOString();
     setEndingAssignmentId(item.assignmentId);
     setMessage(undefined);
 
@@ -196,6 +200,8 @@ export function TeamComposition({
           ? `${item.displayName} quedó marcado para finalizar y enviado a sincronización.`
           : `${item.displayName} quedó marcado para finalizar. Se sincronizará al recuperar conexión.`
       );
+      setFinalizationTarget(undefined);
+      setFinalizationAt(localDateTimeInput(new Date()));
     } catch (error) {
       setMessage(messageOf(error));
     } finally {
@@ -437,6 +443,7 @@ export function TeamComposition({
                           setCorrectionTarget(item);
                           setCorrectedName(item.displayName);
                           setRotationTarget(undefined);
+                          setFinalizationTarget(undefined);
                           setMessage(undefined);
                         }}
                       >
@@ -458,6 +465,7 @@ export function TeamComposition({
                             setReplacementName("");
                             setReplacementAt(localDateTimeInput(new Date()));
                             setCorrectionTarget(undefined);
+                            setFinalizationTarget(undefined);
                             setMessage(undefined);
                           }}
                         >
@@ -471,11 +479,15 @@ export function TeamComposition({
                             rotationBusy ||
                             correctionBusy
                           }
-                          onClick={() => void handleEndAssignment(item)}
+                          onClick={() => {
+                            setFinalizationTarget(item);
+                            setFinalizationAt(localDateTimeInput(new Date()));
+                            setCorrectionTarget(undefined);
+                            setRotationTarget(undefined);
+                            setMessage(undefined);
+                          }}
                         >
-                          {endingAssignmentId === item.assignmentId
-                            ? "Marcando…"
-                            : "Finalizar"}
+                          Finalizar
                         </button>
                       </>
                     )}
@@ -484,6 +496,51 @@ export function TeamComposition({
               ))
             )}
           </div>
+
+          {finalizationTarget && (
+            <form
+              className="form-stack finalization-form"
+              onSubmit={(event) => void handleEndAssignment(event)}
+            >
+              <div className="rotation-heading">
+                <strong>Finalizar asignación de {finalizationTarget.displayName}</strong>
+                <span>
+                  Esta acción no borra el historial. El integrante dejará de estar activo desde la fecha indicada.
+                </span>
+              </div>
+
+              <label>
+                Finalizar desde
+                <input
+                  type="datetime-local"
+                  value={finalizationAt}
+                  onChange={(event) => setFinalizationAt(event.target.value)}
+                  required
+                />
+              </label>
+
+              <div className="rotation-buttons">
+                <button
+                  className="rotation-cancel"
+                  type="button"
+                  disabled={Boolean(endingAssignmentId)}
+                  onClick={() => {
+                    setFinalizationTarget(undefined);
+                    setFinalizationAt(localDateTimeInput(new Date()));
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button disabled={Boolean(endingAssignmentId)} type="submit">
+                  {endingAssignmentId === finalizationTarget.assignmentId
+                    ? "Finalizando…"
+                    : online
+                      ? "Confirmar finalización"
+                      : "Guardar finalización offline"}
+                </button>
+              </div>
+            </form>
+          )}
 
           {correctionTarget && (
             <form
