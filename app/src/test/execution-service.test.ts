@@ -2,7 +2,8 @@ import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   queueEndWorkSession,
-  queueExecutionStart
+  queueExecutionStart,
+  queueExistingWorkSessionStart
 } from "../application/operations/execution-service";
 import { clearLocalDataForTests } from "../infra/local/outbox";
 import { surkaraDb } from "../infra/local/db";
@@ -44,6 +45,27 @@ describe("execution service", () => {
     expect(session?.payload).toMatchObject({
       contractorJobId: queued.job.id,
       operationalTeamId: queued.team.id
+    });
+  });
+
+  it("queues a new session for an existing contractor job", async () => {
+    const command = await queueExistingWorkSessionStart({
+      actorId: "actor-1",
+      organizationId: "org-1",
+      deviceId: "device-1",
+      contractorJobId: "job-1",
+      operationalTeamId: "team-1",
+      startedAt: "2026-09-28T08:00:00-03:00"
+    });
+
+    const stored = await surkaraDb.outbox.get(command.clientOperationId);
+
+    expect(stored?.commandType).toBe("contractor.start_work_session");
+    expect(stored?.dependencies).toEqual([]);
+    expect(stored?.payload).toMatchObject({
+      contractorJobId: "job-1",
+      operationalTeamId: "team-1",
+      startedAt: "2026-09-28T08:00:00-03:00"
     });
   });
 

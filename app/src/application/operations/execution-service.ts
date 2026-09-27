@@ -140,3 +140,32 @@ export async function queueEndWorkSession(input: {
   await enqueueCommand(command);
   return command;
 }
+
+
+export async function queueExistingWorkSessionStart(input: {
+  actorId: string;
+  organizationId: string;
+  deviceId: string;
+  contractorJobId: string;
+  operationalTeamId: string;
+  startedAt: string;
+}): Promise<OfflineCommand<WorkSession>> {
+  const session = startWorkSession({
+    contractorJobId: input.contractorJobId,
+    operationalTeamId: input.operationalTeamId,
+    startedAt: input.startedAt
+  });
+
+  const common = baseCommand(input);
+  const command: OfflineCommand<WorkSession> = {
+    ...common,
+    clientOperationId: crypto.randomUUID(),
+    commandType: "contractor.start_work_session",
+    targetRef: session.id,
+    payload: session,
+    dependencies: []
+  };
+
+  await enqueueCommand(command);
+  return command;
+}

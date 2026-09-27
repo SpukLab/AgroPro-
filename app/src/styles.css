@@ -922,3 +922,47 @@ button:disabled {
     text-align: left;
   }
 }
+
+
+.resume-session-card {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 18px;
+  padding: 14px;
+  border: 1px solid #3b4c31;
+  border-radius: 16px;
+  background: #0b120c;
+}
+
+.resume-session-card > div:first-child {
+  min-width: 0;
+}
+
+.resume-session-card strong,
+.resume-session-card span {
+  display: block;
+}
+
+.resume-session-card strong {
+  margin-bottom: 4px;
+}
+
+.resume-session-card span {
+  color: #94a29b;
+  font-size: 12px;
+}
+
+.resume-session-trigger {
+  width: 100%;
+  border: 1px solid #4b613f;
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #081006;
+  background: #8fd14f;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.resume-session-form {
+  padding-top: 2px;
+}

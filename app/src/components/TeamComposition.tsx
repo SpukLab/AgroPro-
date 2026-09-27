@@ -16,7 +16,10 @@ import type {
   EquipmentType,
   TeamMemberRole
 } from "../domain/operations/team-resource";
-import { queueEndWorkSession } from "../application/operations/execution-service";
+import {
+  queueEndWorkSession,
+  queueExistingWorkSessionStart
+} from "../application/operations/execution-service";
 
 interface TeamCompositionProps {
   organizationId: string;
@@ -107,6 +110,10 @@ export function TeamComposition({
   const [sessionCloseAt, setSessionCloseAt] = useState(localDateTimeInput(new Date()));
   const [sessionCloseBusy, setSessionCloseBusy] = useState(false);
   const [sessionClosePendingId, setSessionClosePendingId] = useState<string>();
+  const [resumeOpen, setResumeOpen] = useState(false);
+  const [resumeAt, setResumeAt] = useState(localDateTimeInput(new Date()));
+  const [resumeBusy, setResumeBusy] = useState(false);
+  const [resumePending, setResumePending] = useState(false);
   const [busy, setBusy] = useState(false);
   const [endingAssignmentId, setEndingAssignmentId] = useState<string>();
   const [finalizationTarget, setFinalizationTarget] = useState<TeamCompositionItem>();
@@ -378,6 +385,39 @@ export function TeamComposition({
     }
   }
 
+  async function handleResumeJob(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const previous = sessionHistory[0];
+    if (!previous || resumeBusy || resumePending) return;
+
+    setResumeBusy(true);
+    setMessage(undefined);
+
+    try {
+      await queueExistingWorkSessionStart({
+        actorId,
+        organizationId,
+        deviceId,
+        contractorJobId: previous.contractorJobId,
+        operationalTeamId: previous.teamId,
+        startedAt: new Date(resumeAt).toISOString()
+      });
+
+      setResumePending(true);
+      setResumeOpen(false);
+      await onPendingChanged();
+      setMessage(
+        online
+          ? `Nueva jornada preparada para ${previous.teamName} y enviada a sincronización.`
+          : `Nueva jornada guardada offline para ${previous.teamName}. Se sincronizará al recuperar conexión.`
+      );
+    } catch (error) {
+      setMessage(messageOf(error));
+    } finally {
+      setResumeBusy(false);
+    }
+  }
+
   async function handleAddMember(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selected) return;
@@ -552,7 +592,69 @@ export function TeamComposition({
       {loading ? (
         <p>Cargando jornadas activas…</p>
       ) : contexts.length === 0 ? (
-        <p>No hay una jornada activa confirmada todavía.</p>
+        <>
+          <p>No hay una jornada activa confirmada todavía.</p>
+
+          {sessionHistory[0] && (
+            <div className="resume-session-card">
+              <div>
+                <strong>Continuar último trabajo</strong>
+                <span>
+                  {sessionHistory[0].cropCode} · {sessionHistory[0].fieldName} · {sessionHistory[0].teamName}
+                </span>
+              </div>
+
+              {!resumeOpen ? (
+                <button
+                  className="resume-session-trigger"
+                  type="button"
+                  disabled={resumePending}
+                  onClick={() => {
+                    setResumeAt(localDateTimeInput(new Date()));
+                    setResumeOpen(true);
+                    setMessage(undefined);
+                  }}
+                >
+                  {resumePending ? "INICIO PENDIENTE" : "Nueva jornada"}
+                </button>
+              ) : (
+                <form
+                  className="form-stack resume-session-form"
+                  onSubmit={(event) => void handleResumeJob(event)}
+                >
+                  <label>
+                    Inicio de nueva jornada
+                    <input
+                      type="datetime-local"
+                      value={resumeAt}
+                      onChange={(event) => setResumeAt(event.target.value)}
+                      required
+                    />
+                  </label>
+                  <div className="rotation-buttons">
+                    <button
+                      className="rotation-cancel"
+                      type="button"
+                      disabled={resumeBusy}
+                      onClick={() => setResumeOpen(false)}
+                    >
+                      Cancelar
+                    </button>
+                    <button disabled={resumeBusy} type="submit">
+                      {resumeBusy
+                        ? "Preparando…"
+                        : online
+                          ? "Iniciar nueva jornada"
+                          : "Guardar inicio offline"}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          )}
+
+          {message && <p className="message">{message}</p>}
+        </>
       ) : (
         <>
           {contexts.length > 1 && (
