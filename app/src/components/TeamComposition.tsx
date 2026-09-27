@@ -17,6 +17,7 @@ import type {
   TeamMemberRole
 } from "../domain/operations/team-resource";
 import {
+  queueCompleteContractorJob,
   queueEndWorkSession,
   queueExistingWorkSessionStart
 } from "../application/operations/execution-service";
@@ -114,6 +115,9 @@ export function TeamComposition({
   const [resumeAt, setResumeAt] = useState(localDateTimeInput(new Date()));
   const [resumeBusy, setResumeBusy] = useState(false);
   const [resumePending, setResumePending] = useState(false);
+  const [jobCompleteOpen, setJobCompleteOpen] = useState(false);
+  const [jobCompleteBusy, setJobCompleteBusy] = useState(false);
+  const [jobCompletePending, setJobCompletePending] = useState(false);
   const [busy, setBusy] = useState(false);
   const [endingAssignmentId, setEndingAssignmentId] = useState<string>();
   const [finalizationTarget, setFinalizationTarget] = useState<TeamCompositionItem>();
@@ -418,6 +422,38 @@ export function TeamComposition({
     }
   }
 
+  async function handleCompleteJob(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const previous = sessionHistory[0];
+    if (!previous || jobCompleteBusy || jobCompletePending) return;
+
+    setJobCompleteBusy(true);
+    setMessage(undefined);
+
+    try {
+      await queueCompleteContractorJob({
+        actorId,
+        organizationId,
+        deviceId,
+        jobId: previous.contractorJobId,
+        expectedRevision: previous.contractorJobRevision
+      });
+
+      setJobCompletePending(true);
+      setJobCompleteOpen(false);
+      await onPendingChanged();
+      setMessage(
+        online
+          ? `Finalización del trabajo preparada para ${previous.teamName} y enviada a sincronización.`
+          : `Finalización del trabajo guardada offline para ${previous.teamName}. Se sincronizará al recuperar conexión.`
+      );
+    } catch (error) {
+      setMessage(messageOf(error));
+    } finally {
+      setJobCompleteBusy(false);
+    }
+  }
+
   async function handleAddMember(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selected) return;
@@ -595,63 +631,110 @@ export function TeamComposition({
         <>
           <p>No hay una jornada activa confirmada todavía.</p>
 
-          {sessionHistory[0] && (
-            <div className="resume-session-card">
-              <div>
-                <strong>Continuar último trabajo</strong>
-                <span>
-                  {sessionHistory[0].cropCode} · {sessionHistory[0].fieldName} · {sessionHistory[0].teamName}
-                </span>
-              </div>
+          {sessionHistory[0] &&
+            !["completed", "cancelled"].includes(
+              sessionHistory[0].contractorJobStatus
+            ) && (
+              <div className="resume-session-card">
+                <div>
+                  <strong>Trabajo en curso</strong>
+                  <span>
+                    {sessionHistory[0].cropCode} · {sessionHistory[0].fieldName} · {sessionHistory[0].teamName}
+                  </span>
+                </div>
 
-              {!resumeOpen ? (
-                <button
-                  className="resume-session-trigger"
-                  type="button"
-                  disabled={resumePending}
-                  onClick={() => {
-                    setResumeAt(localDateTimeInput(new Date()));
-                    setResumeOpen(true);
-                    setMessage(undefined);
-                  }}
-                >
-                  {resumePending ? "INICIO PENDIENTE" : "Nueva jornada"}
-                </button>
-              ) : (
-                <form
-                  className="form-stack resume-session-form"
-                  onSubmit={(event) => void handleResumeJob(event)}
-                >
-                  <label>
-                    Inicio de nueva jornada
-                    <input
-                      type="datetime-local"
-                      value={resumeAt}
-                      onChange={(event) => setResumeAt(event.target.value)}
-                      required
-                    />
-                  </label>
-                  <div className="rotation-buttons">
+                {!resumeOpen && !jobCompleteOpen ? (
+                  <div className="job-lifecycle-actions">
                     <button
-                      className="rotation-cancel"
+                      className="resume-session-trigger"
                       type="button"
-                      disabled={resumeBusy}
-                      onClick={() => setResumeOpen(false)}
+                      disabled={resumePending || jobCompletePending}
+                      onClick={() => {
+                        setResumeAt(localDateTimeInput(new Date()));
+                        setResumeOpen(true);
+                        setJobCompleteOpen(false);
+                        setMessage(undefined);
+                      }}
                     >
-                      Cancelar
+                      {resumePending ? "INICIO PENDIENTE" : "Nueva jornada"}
                     </button>
-                    <button disabled={resumeBusy} type="submit">
-                      {resumeBusy
-                        ? "Preparando…"
-                        : online
-                          ? "Iniciar nueva jornada"
-                          : "Guardar inicio offline"}
+                    <button
+                      className="job-complete-trigger"
+                      type="button"
+                      disabled={resumePending || jobCompletePending}
+                      onClick={() => {
+                        setJobCompleteOpen(true);
+                        setResumeOpen(false);
+                        setMessage(undefined);
+                      }}
+                    >
+                      {jobCompletePending ? "CIERRE PENDIENTE" : "Finalizar trabajo"}
                     </button>
                   </div>
-                </form>
-              )}
-            </div>
-          )}
+                ) : resumeOpen ? (
+                  <form
+                    className="form-stack resume-session-form"
+                    onSubmit={(event) => void handleResumeJob(event)}
+                  >
+                    <label>
+                      Inicio de nueva jornada
+                      <input
+                        type="datetime-local"
+                        value={resumeAt}
+                        onChange={(event) => setResumeAt(event.target.value)}
+                        required
+                      />
+                    </label>
+                    <div className="rotation-buttons">
+                      <button
+                        className="rotation-cancel"
+                        type="button"
+                        disabled={resumeBusy}
+                        onClick={() => setResumeOpen(false)}
+                      >
+                        Cancelar
+                      </button>
+                      <button disabled={resumeBusy} type="submit">
+                        {resumeBusy
+                          ? "Preparando…"
+                          : online
+                            ? "Iniciar nueva jornada"
+                            : "Guardar inicio offline"}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <form
+                    className="form-stack job-complete-form"
+                    onSubmit={(event) => void handleCompleteJob(event)}
+                  >
+                    <div className="rotation-heading">
+                      <strong>Finalizar trabajo</strong>
+                      <span>
+                        Cierra el trabajo completo después de sus jornadas. El historial de jornadas y equipo se conserva.
+                      </span>
+                    </div>
+                    <div className="rotation-buttons">
+                      <button
+                        className="rotation-cancel"
+                        type="button"
+                        disabled={jobCompleteBusy}
+                        onClick={() => setJobCompleteOpen(false)}
+                      >
+                        Cancelar
+                      </button>
+                      <button disabled={jobCompleteBusy} type="submit">
+                        {jobCompleteBusy
+                          ? "Finalizando…"
+                          : online
+                            ? "Confirmar finalización"
+                            : "Guardar finalización offline"}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
 
           {message && <p className="message">{message}</p>}
         </>
