@@ -73,3 +73,86 @@ Validación adicional realizada en iPhone con la PWA instalada:
 **PASS.**
 
 Quedó validado en dispositivo físico el comportamiento esperado de **offline queue → reapertura con red → auto-sync → autoridad remota** para composición operativa.
+
+
+## Rotación de operador + corrección visible — validación física 2026-09-27
+
+Se probó en la PWA instalada una rotación real de operador:
+
+1. **Victor** estaba activo como operador de tractor;
+2. se ejecutó **Reemplazar**;
+3. SURKARA cerró la asignación anterior y creó una nueva asignación con el mismo rol;
+4. la autoridad remota confirmó:
+   - Victor → **FINALIZADO**;
+   - Victor turno tarde → **ACTIVO**;
+   - ambos intervalos se unen en el mismo instante efectivo, sin borrar historia;
+5. posteriormente se corrigió un error de tipeo de la nueva asignación mediante **corrección de nombre visible**;
+6. la corrección no creó otro operador, no cambió rol ni horarios y no reescribió la identidad maestra de la persona.
+
+### Resultado
+
+**PASS.**
+
+Quedó validada físicamente la semántica **reemplazo ≠ edición destructiva** y la separación **equipo activo / historial de asignaciones**.
+
+## Lifecycle WorkSession / ContractorJob — backend live
+
+Los siguientes recorridos están implementados en cliente, Sync Gateway y PostgreSQL, y fueron probados contra el proyecto Supabase real dentro de transacciones con rollback:
+
+### Cerrar jornada
+
+- una WorkSession activa puede pasar a `completed`;
+- `ended_at` y revisión se preservan;
+- el cierre duplicado es idempotente;
+- una segunda mutación incompatible produce conflicto;
+- el cierre de la jornada no borra Operational Team ni asignaciones.
+
+**Backend live: PASS.**
+
+### Trabajo multi-jornada
+
+Un mismo ContractorJob puede conservar:
+
+```text
+ContractorJob
+├─ WorkSession / Jornada 1
+├─ WorkSession / Jornada 2
+├─ WorkSession / Jornada 3
+└─ ...
+```
+
+Se validó:
+
+- cerrar Jornada 1;
+- iniciar Jornada 2 sobre el mismo ContractorJob y el mismo Operational Team;
+- impedir dos WorkSessions activas simultáneas para el mismo trabajo;
+- rechazar un Operational Team que no corresponda al trabajo;
+- conservar cada jornada como registro independiente.
+
+**Backend live: PASS.**
+
+### Finalizar trabajo
+
+Se incorporó una acción distinta de **Cerrar jornada**:
+
+- `Cerrar jornada` finaliza sólo una WorkSession;
+- `Nueva jornada` continúa el mismo ContractorJob;
+- `Finalizar trabajo` cambia el ContractorJob a `completed`;
+- no permite finalizar el trabajo mientras exista una WorkSession activa;
+- utiliza revisión optimista para detectar concurrencia;
+- conserva todas las jornadas y asignaciones históricas.
+
+**Backend live: PASS.**
+
+## Pendiente de cierre físico
+
+Aún falta validar en iPhone el lifecycle completo ya probado en backend:
+
+1. **Cerrar jornada** real;
+2. verificar su aparición en **Historial de jornadas**;
+3. iniciar **Nueva jornada** sobre el mismo trabajo;
+4. cerrar esa segunda jornada;
+5. ejecutar **Finalizar trabajo**;
+6. confirmar que el trabajo queda cerrado y ya no ofrece continuidad.
+
+Hasta completar esos pasos, no registrar el lifecycle multi-jornada como E2E físico completo.
