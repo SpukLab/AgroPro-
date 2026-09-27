@@ -136,6 +136,17 @@ begin
   ) then
     raise exception 'work session was not created';
   end if;
+
+  if not exists (
+    select 1
+      from public.contractor_jobs
+     where id = '72000000-0000-0000-0000-000000000001'
+       and organization_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+       and status = 'active'
+       and revision = 2
+  ) then
+    raise exception 'starting work session did not advance contractor job';
+  end if;
 end
 $$;
 
