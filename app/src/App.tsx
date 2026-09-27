@@ -22,6 +22,10 @@ import { getOrCreateDeviceId } from "./infra/device/device-id";
 import { surkaraDb } from "./infra/local/db";
 import { createSupabaseSyncTransport } from "./infra/supabase/sync-transport";
 import { isSupabaseConfigured, supabase } from "./infra/supabase/client";
+import {
+  probeSyncGateway,
+  type BackendReachability
+} from "./infra/network/reachability";
 import "./styles.css";
 
 type AuthMode = "signin" | "signup" | "forgot";
@@ -47,13 +51,27 @@ export default function App() {
   const [syncBusy, setSyncBusy] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string>();
   const [syncVersion, setSyncVersion] = useState(0);
-  const [online, setOnline] = useState(navigator.onLine);
+  const [reachability, setReachability] = useState<BackendReachability>(
+    navigator.onLine ? "checking" : "offline"
+  );
   const [deviceId] = useState(getOrCreateDeviceId);
   const bootstrapAttempt = useRef<BootstrapAttempt | null>(null);
   const syncInFlight = useRef(false);
+  const online = reachability === "online";
 
   async function refreshPending() {
     setPending(await surkaraDb.outbox.where("status").equals("pending").count());
+  }
+
+  async function refreshReachability(): Promise<boolean> {
+    if (!navigator.onLine) {
+      setReachability("offline");
+      return false;
+    }
+
+    const reachable = await probeSyncGateway();
+    setReachability(reachable ? "online" : "offline");
+    return reachable;
   }
 
   async function refreshMemberships() {
@@ -101,17 +119,32 @@ export default function App() {
     });
 
     void refreshPending();
+    void refreshReachability();
 
-    const onOnline = () => setOnline(true);
-    const onOffline = () => setOnline(false);
+    const onOnline = () => void refreshReachability();
+    const onOffline = () => setReachability("offline");
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void refreshReachability();
+      }
+    };
+    const reachabilityTimer = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void refreshReachability();
+      }
+    }, 30_000);
+
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       mounted = false;
       subscription?.data.subscription.unsubscribe();
+      window.clearInterval(reachabilityTimer);
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
 
@@ -122,9 +155,30 @@ export default function App() {
   }, [session?.user.id]);
 
   useEffect(() => {
-    if (!online || !session || pending === 0 || syncInFlight.current) return;
-    void handleSync(true);
-  }, [online, session?.user.id, pending]);
+    if (!session || pending === 0) return;
+
+    let cancelled = false;
+
+    const tryAutomaticSync = async () => {
+      if (syncInFlight.current) return;
+      const reachable = await refreshReachability();
+      if (!cancelled && reachable) {
+        await handleSync(true);
+      }
+    };
+
+    void tryAutomaticSync();
+    const retryTimer = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void tryAutomaticSync();
+      }
+    }, 15_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(retryTimer);
+    };
+  }, [session?.user.id, pending]);
 
   async function handleAuthSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -561,8 +615,12 @@ export default function App() {
           <span className="eyebrow">SURKARA</span>
           <h1>Operaciones</h1>
         </div>
-        <span className={online ? "status online" : "status offline"}>
-          {online ? "ONLINE" : "OFFLINE"}
+        <span className={`status ${reachability}`}>
+          {reachability === "online"
+            ? "ONLINE"
+            : reachability === "checking"
+              ? "COMPROBANDO"
+              : "OFFLINE"}
         </span>
       </header>
 
@@ -623,7 +681,7 @@ export default function App() {
           </p>
         </div>
         <button
-          disabled={syncBusy || !online || pending === 0}
+          disabled={syncBusy || reachability !== "online" || pending === 0}
           onClick={() => void handleSync()}
         >
           {syncBusy ? "Sincronizando…" : "Sincronizar pendientes"}
