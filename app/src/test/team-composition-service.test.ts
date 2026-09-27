@@ -1,11 +1,37 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
-import { queueTeamMember } from "../application/operations/team-composition-service";
+import {
+  queueEndTeamAssignment,
+  queueTeamMember
+} from "../application/operations/team-composition-service";
 import { clearLocalDataForTests } from "../infra/local/outbox";
 import { surkaraDb } from "../infra/local/db";
 
 beforeEach(async () => {
   await clearLocalDataForTests();
+  it("queues assignment closure as a single offline command", async () => {
+    const command = await queueEndTeamAssignment({
+      actorId: "actor-1",
+      organizationId: "org-1",
+      deviceId: "device-1",
+      operationalTeamId: "team-1",
+      assignmentId: "assignment-1",
+      validFrom: "2026-09-27T08:00:00-03:00",
+      validTo: "2026-09-27T12:00:00-03:00",
+      reason: "Cambio de operador"
+    });
+
+    const stored = await surkaraDb.outbox.get(command.clientOperationId);
+
+    expect(stored?.commandType).toBe("operations.end_team_assignment");
+    expect(stored?.targetRef).toBe("assignment-1");
+    expect(stored?.dependencies).toEqual([]);
+    expect(stored?.payload).toMatchObject({
+      assignmentId: "assignment-1",
+      operationalTeamId: "team-1",
+      reason: "Cambio de operador"
+    });
+  });
 });
 
 describe("queueTeamMember", () => {
