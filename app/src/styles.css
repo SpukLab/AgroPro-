@@ -223,7 +223,7 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(143, 209, 79, 0.08);
 }
 
-button:not(.segment):not(.resource-option):not(.assignment-end) {
+button:not(.segment):not(.resource-option):not(.assignment-end):not(.assignment-replace):not(.rotation-cancel) {
   width: 100%;
   border: 0;
   border-radius: 14px;
@@ -621,4 +621,62 @@ button:disabled {
 .assignment-end:disabled {
   opacity: 0.48;
   cursor: not-allowed;
+}
+
+
+.assignment-replace {
+  width: auto;
+  border: 1px solid #4b613f;
+  border-radius: 10px;
+  padding: 7px 10px;
+  color: #a9df78;
+  background: #10170f;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.assignment-replace:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.rotation-form {
+  margin: 4px 0 18px;
+  padding: 16px;
+  border: 1px solid #3b4c31;
+  border-radius: 16px;
+  background: #0b120c;
+}
+
+.rotation-heading {
+  display: grid;
+  gap: 4px;
+}
+
+.rotation-heading strong {
+  font-size: 15px;
+}
+
+.rotation-heading span {
+  color: #94a29b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.rotation-buttons {
+  display: grid;
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+  gap: 8px;
+}
+
+.rotation-cancel {
+  width: 100%;
+  border: 1px solid #34453c;
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #c5d0ca;
+  background: #151e19;
+  font-weight: 750;
+  cursor: pointer;
 }
