@@ -2,6 +2,7 @@ import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
   listActiveExecutionContexts,
+  listOpenContractorJobs,
   listRecentWorkSessions,
   listTeamComposition,
   queueCorrectTeamAssignmentLabel,
@@ -9,6 +10,7 @@ import {
   queueReplaceTeamMember,
   queueTeamMember,
   type ActiveExecutionContext,
+  type OpenContractorJob,
   type TeamCompositionItem,
   type WorkSessionHistoryItem
 } from "../application/operations/team-composition-service";
@@ -104,6 +106,8 @@ export function TeamComposition({
   onPendingChanged
 }: TeamCompositionProps) {
   const [contexts, setContexts] = useState<ActiveExecutionContext[]>([]);
+  const [openJobs, setOpenJobs] = useState<OpenContractorJob[]>([]);
+  const [selectedOpenJobId, setSelectedOpenJobId] = useState("");
   const [sessionHistory, setSessionHistory] = useState<WorkSessionHistoryItem[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState("");
   const [composition, setComposition] = useState<TeamCompositionItem[]>([]);
@@ -138,6 +142,13 @@ export function TeamComposition({
   const selected = useMemo(
     () => contexts.find((item) => item.sessionId === selectedSessionId) ?? contexts[0],
     [contexts, selectedSessionId]
+  );
+
+  const selectedOpenJob = useMemo(
+    () =>
+      openJobs.find((item) => item.jobId === selectedOpenJobId) ??
+      openJobs[0],
+    [openJobs, selectedOpenJobId]
   );
 
   const activeComposition = useMemo(
@@ -175,6 +186,20 @@ export function TeamComposition({
     }
   }
 
+  async function refreshOpenJobs() {
+    try {
+      const next = await listOpenContractorJobs(organizationId);
+      setOpenJobs(next);
+      setSelectedOpenJobId((current) =>
+        current && next.some((item) => item.jobId === current)
+          ? current
+          : next[0]?.jobId ?? ""
+      );
+    } catch (error) {
+      if (online) setMessage(messageOf(error));
+    }
+  }
+
   async function refreshComposition(teamId: string) {
     try {
       setComposition(await listTeamComposition(organizationId, teamId));
@@ -185,15 +210,19 @@ export function TeamComposition({
 
   useEffect(() => {
     setContexts([]);
+    setOpenJobs([]);
     setComposition([]);
     setSelectedSessionId("");
+    setSelectedOpenJobId("");
     void refreshContexts();
+    void refreshOpenJobs();
     void refreshSessionHistory();
   }, [organizationId]);
 
   useEffect(() => {
     setMessage(undefined);
     void refreshContexts();
+    void refreshOpenJobs();
     void refreshSessionHistory();
   }, [syncVersion]);
 
@@ -391,8 +420,8 @@ export function TeamComposition({
 
   async function handleResumeJob(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const previous = sessionHistory[0];
-    if (!previous || resumeBusy || resumePending) return;
+    const job = selectedOpenJob;
+    if (!job || resumeBusy || resumePending) return;
 
     setResumeBusy(true);
     setMessage(undefined);
@@ -402,8 +431,8 @@ export function TeamComposition({
         actorId,
         organizationId,
         deviceId,
-        contractorJobId: previous.contractorJobId,
-        operationalTeamId: previous.teamId,
+        contractorJobId: job.jobId,
+        operationalTeamId: job.teamId,
         startedAt: new Date(resumeAt).toISOString()
       });
 
@@ -412,8 +441,8 @@ export function TeamComposition({
       await onPendingChanged();
       setMessage(
         online
-          ? `Nueva jornada preparada para ${previous.teamName} y enviada a sincronización.`
-          : `Nueva jornada guardada offline para ${previous.teamName}. Se sincronizará al recuperar conexión.`
+          ? `Nueva jornada preparada para ${job.teamName} y enviada a sincronización.`
+          : `Nueva jornada guardada offline para ${job.teamName}. Se sincronizará al recuperar conexión.`
       );
     } catch (error) {
       setMessage(messageOf(error));
@@ -424,8 +453,8 @@ export function TeamComposition({
 
   async function handleCompleteJob(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const previous = sessionHistory[0];
-    if (!previous || jobCompleteBusy || jobCompletePending) return;
+    const job = selectedOpenJob;
+    if (!job || jobCompleteBusy || jobCompletePending) return;
 
     setJobCompleteBusy(true);
     setMessage(undefined);
@@ -435,8 +464,8 @@ export function TeamComposition({
         actorId,
         organizationId,
         deviceId,
-        jobId: previous.contractorJobId,
-        expectedRevision: previous.contractorJobRevision
+        jobId: job.jobId,
+        expectedRevision: job.revision
       });
 
       setJobCompletePending(true);
@@ -444,8 +473,8 @@ export function TeamComposition({
       await onPendingChanged();
       setMessage(
         online
-          ? `Finalización del trabajo preparada para ${previous.teamName} y enviada a sincronización.`
-          : `Finalización del trabajo guardada offline para ${previous.teamName}. Se sincronizará al recuperar conexión.`
+          ? `Finalización del trabajo preparada para ${job.teamName} y enviada a sincronización.`
+          : `Finalización del trabajo guardada offline para ${job.teamName}. Se sincronizará al recuperar conexión.`
       );
     } catch (error) {
       setMessage(messageOf(error));
@@ -631,15 +660,33 @@ export function TeamComposition({
         <>
           <p>No hay una jornada activa confirmada todavía.</p>
 
-          {sessionHistory[0] &&
-            !["completed", "cancelled"].includes(
-              sessionHistory[0].contractorJobStatus
-            ) && (
+          {openJobs.length > 1 && (
+            <label className="standalone-label">
+              Trabajo abierto
+              <select
+                value={selectedOpenJob?.jobId ?? ""}
+                onChange={(event) => {
+                  setSelectedOpenJobId(event.target.value);
+                  setResumeOpen(false);
+                  setJobCompleteOpen(false);
+                  setMessage(undefined);
+                }}
+              >
+                {openJobs.map((job) => (
+                  <option key={job.jobId} value={job.jobId}>
+                    {job.cropCode} · {job.fieldName} · {job.teamName}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          {selectedOpenJob && (
               <div className="resume-session-card">
                 <div>
                   <strong>Trabajo en curso</strong>
                   <span>
-                    {sessionHistory[0].cropCode} · {sessionHistory[0].fieldName} · {sessionHistory[0].teamName}
+                    {selectedOpenJob.cropCode} · {selectedOpenJob.fieldName} · {selectedOpenJob.teamName}
                   </span>
                 </div>
 

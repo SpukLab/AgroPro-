@@ -42,6 +42,18 @@ export interface WorkSessionHistoryItem {
   revision: number;
 }
 
+export interface OpenContractorJob {
+  jobId: string;
+  teamId: string;
+  teamName: string;
+  agriculturalOperationId: string;
+  status: "ready" | "active";
+  revision: number;
+  cropCode: string;
+  fieldName: string;
+  updatedAt: string;
+}
+
 export interface TeamCompositionItem {
   assignmentId: string;
   subjectKind: "person" | "equipment";
@@ -229,6 +241,53 @@ export async function listActiveExecutionContexts(
     return contexts;
   } catch (error) {
     const cached = await getEntityCache<ActiveExecutionContext[]>(key);
+    if (cached) return cached;
+    throw error;
+  }
+}
+
+export async function listOpenContractorJobs(
+  organizationId: string
+): Promise<OpenContractorJob[]> {
+  if (!supabase) throw new Error("Supabase is not configured");
+  const key = `open-contractor-jobs:v1:${organizationId}`;
+
+  try {
+    const { data, error } = await supabase
+      .from("contractor_jobs")
+      .select(
+        "id, status, revision, updated_at, agricultural_operation_id, operational_team_id, operational_teams!inner(name), agricultural_operations!inner(crop_code, fields!inner(name))"
+      )
+      .eq("organization_id", organizationId)
+      .in("status", ["ready", "active"])
+      .order("updated_at", { ascending: false });
+
+    if (error) throw error;
+
+    const jobs: OpenContractorJob[] = (data ?? []).map((row) => {
+      const team = row.operational_teams as unknown as { name: string };
+      const operation = row.agricultural_operations as unknown as {
+        crop_code: string;
+        fields: { name: string };
+      };
+
+      return {
+        jobId: row.id as string,
+        teamId: row.operational_team_id as string,
+        teamName: team.name,
+        agriculturalOperationId: row.agricultural_operation_id as string,
+        status: row.status as "ready" | "active",
+        revision: Number(row.revision),
+        cropCode: operation.crop_code,
+        fieldName: operation.fields.name,
+        updatedAt: row.updated_at as string
+      };
+    });
+
+    await putEntityCache(key, "open-contractor-jobs", organizationId, jobs);
+    return jobs;
+  } catch (error) {
+    const cached = await getEntityCache<OpenContractorJob[]>(key);
     if (cached) return cached;
     throw error;
   }
