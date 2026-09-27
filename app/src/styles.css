@@ -103,6 +103,7 @@ h2 {
 }
 
 .status.online { color: #8fd14f; }
+.status.checking { color: #94a29b; }
 .status.offline { color: #f4ae51; }
 
 .hero,

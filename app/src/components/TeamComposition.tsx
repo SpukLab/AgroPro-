@@ -18,6 +18,7 @@ interface TeamCompositionProps {
   actorId: string;
   deviceId: string;
   syncVersion: number;
+  online: boolean;
   onPendingChanged: () => Promise<void>;
 }
 
@@ -90,6 +91,7 @@ export function TeamComposition({
   actorId,
   deviceId,
   syncVersion,
+  online,
   onPendingChanged
 }: TeamCompositionProps) {
   const [contexts, setContexts] = useState<ActiveExecutionContext[]>([]);
@@ -129,7 +131,7 @@ export function TeamComposition({
     try {
       setComposition(await listTeamComposition(organizationId, teamId));
     } catch (error) {
-      if (navigator.onLine) setMessage(messageOf(error));
+      if (online) setMessage(messageOf(error));
     }
   }
 
@@ -181,7 +183,9 @@ export function TeamComposition({
       );
       await onPendingChanged();
       setMessage(
-        `${item.displayName} quedó marcado para finalizar. Se aplicará al sincronizar.`
+        online
+          ? `${item.displayName} quedó marcado para finalizar y enviado a sincronización.`
+          : `${item.displayName} quedó marcado para finalizar. Se sincronizará al recuperar conexión.`
       );
     } catch (error) {
       setMessage(messageOf(error));
@@ -229,7 +233,9 @@ export function TeamComposition({
 
       await onPendingChanged();
       setMessage(
-        `${presetLabels[preset]} "${name}" preparado localmente · 2 comandos encadenados · asignación ${queued.assignmentId.slice(0, 8)}…`
+        online
+          ? `${presetLabels[preset]} "${name}" guardado localmente y enviado a sincronización · 2 comandos encadenados.`
+          : `${presetLabels[preset]} "${name}" guardado localmente · 2 comandos pendientes hasta recuperar conexión.`
       );
       setDisplayName("");
     } catch (error) {
@@ -378,7 +384,9 @@ export function TeamComposition({
             <button disabled={busy} type="submit">
               {busy
                 ? "Preparando…"
-                : `Agregar ${presetLabels[preset]} al equipo offline`}
+                : online
+                  ? `Agregar ${presetLabels[preset]} al equipo`
+                  : `Agregar ${presetLabels[preset]} al equipo offline`}
             </button>
           </form>
 
