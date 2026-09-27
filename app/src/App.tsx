@@ -572,7 +572,7 @@ export default function App() {
       </section>
 
       <section className="hero">
-        <p>Milestone A · backend Supabase activo</p>
+        <p>Estado de sincronización local</p>
         <strong>{pending}</strong>
         <span>comandos pendientes en este dispositivo</span>
       </section>
