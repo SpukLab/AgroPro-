@@ -21,8 +21,6 @@ export interface ActiveExecutionContext {
   teamId: string;
   teamName: string;
   agriculturalOperationId: string;
-  contractorJobStatus: "planned" | "ready" | "active" | "completed" | "cancelled";
-  contractorJobRevision: number;
   cropCode: string;
   fieldName: string;
   startedAt: string;
@@ -35,6 +33,8 @@ export interface WorkSessionHistoryItem {
   teamId: string;
   teamName: string;
   agriculturalOperationId: string;
+  contractorJobStatus: "planned" | "ready" | "active" | "completed" | "cancelled";
+  contractorJobRevision: number;
   cropCode: string;
   fieldName: string;
   startedAt: string;
