@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  createEndTeamAssignmentPayload,
   createEquipmentResource,
   createTeamMemberAssignment,
   createTeamPerson
@@ -46,6 +47,34 @@ describe("team resources", () => {
 
     expect(assignment.partyId).toBe("person-1");
     expect(assignment.equipmentId).toBeUndefined();
+  });
+
+  it("creates a temporal closure without deleting the assignment", () => {
+    const closure = createEndTeamAssignmentPayload({
+      assignmentId: "assignment-1",
+      operationalTeamId: "team-1",
+      validFrom: "2026-09-27T08:00:00-03:00",
+      validTo: "2026-09-27T12:00:00-03:00",
+      reason: "Cambio de operador"
+    });
+
+    expect(closure).toEqual({
+      assignmentId: "assignment-1",
+      operationalTeamId: "team-1",
+      validTo: "2026-09-27T12:00:00-03:00",
+      reason: "Cambio de operador"
+    });
+  });
+
+  it("rejects a closure before assignment start", () => {
+    expect(() =>
+      createEndTeamAssignmentPayload({
+        assignmentId: "assignment-1",
+        operationalTeamId: "team-1",
+        validFrom: "2026-09-27T12:00:00-03:00",
+        validTo: "2026-09-27T08:00:00-03:00"
+      })
+    ).toThrow(/validTo/);
   });
 
   it("rejects ambiguous assignment subjects", () => {
