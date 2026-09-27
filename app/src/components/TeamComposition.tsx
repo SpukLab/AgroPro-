@@ -121,6 +121,16 @@ export function TeamComposition({
     [contexts, selectedSessionId]
   );
 
+  const activeComposition = useMemo(
+    () => composition.filter((item) => !item.validTo || item.pendingEnd),
+    [composition]
+  );
+
+  const historicalComposition = useMemo(
+    () => composition.filter((item) => item.validTo && !item.pendingEnd),
+    [composition]
+  );
+
   async function refreshContexts() {
     setLoading(true);
     try {
@@ -366,6 +376,97 @@ export function TeamComposition({
     }
   }
 
+  function renderCompositionRow(item: TeamCompositionItem) {
+    return (
+      <article className="composition-row" key={item.assignmentId}>
+        <div className="composition-main">
+          <strong>{item.displayName}</strong>
+          <span>{roleLabels[item.role] ?? item.role}</span>
+        </div>
+        <div className="composition-actions">
+          <span
+            className={
+              item.pendingStart ||
+              item.pendingEnd ||
+              item.pendingLabelCorrection
+                ? "assignment-pending"
+                : item.validTo
+                  ? "assignment-ended"
+                  : "assignment-active"
+            }
+          >
+            {item.pendingStart
+              ? "ALTA PENDIENTE"
+              : item.pendingEnd
+                ? "BAJA PENDIENTE"
+                : item.pendingLabelCorrection
+                  ? "CORRECCIÓN PENDIENTE"
+                  : item.validTo
+                    ? "FINALIZADO"
+                    : "ACTIVO"}
+          </span>
+          {!item.pendingStart && (
+            <button
+              className="assignment-correct"
+              type="button"
+              disabled={correctionBusy || rotationBusy || Boolean(endingAssignmentId)}
+              onClick={() => {
+                setCorrectionTarget(item);
+                setCorrectedName(item.displayName);
+                setRotationTarget(undefined);
+                setFinalizationTarget(undefined);
+                setMessage(undefined);
+              }}
+            >
+              Corregir nombre
+            </button>
+          )}
+          {!item.validTo && !item.pendingStart && (
+            <>
+              <button
+                className="assignment-replace"
+                type="button"
+                disabled={
+                  Boolean(endingAssignmentId) ||
+                  rotationBusy ||
+                  correctionBusy
+                }
+                onClick={() => {
+                  setRotationTarget(item);
+                  setReplacementName("");
+                  setReplacementAt(localDateTimeInput(new Date()));
+                  setCorrectionTarget(undefined);
+                  setFinalizationTarget(undefined);
+                  setMessage(undefined);
+                }}
+              >
+                Reemplazar
+              </button>
+              <button
+                className="assignment-end"
+                type="button"
+                disabled={
+                  Boolean(endingAssignmentId) ||
+                  rotationBusy ||
+                  correctionBusy
+                }
+                onClick={() => {
+                  setFinalizationTarget(item);
+                  setFinalizationAt(localDateTimeInput(new Date()));
+                  setCorrectionTarget(undefined);
+                  setRotationTarget(undefined);
+                  setMessage(undefined);
+                }}
+              >
+                Finalizar
+              </button>
+            </>
+          )}
+        </div>
+      </article>
+    );
+  }
+
   return (
     <section className="card">
       <span className="step">EQUIPO DE JORNADA</span>
@@ -403,99 +504,28 @@ export function TeamComposition({
           )}
 
           <div className="composition-list">
-            {composition.length === 0 ? (
-              <p className="empty-note">Todavía no hay integrantes confirmados.</p>
+            <div className="composition-section-heading">
+              <strong>Equipo activo</strong>
+              <span>{activeComposition.length}</span>
+            </div>
+            {activeComposition.length === 0 ? (
+              <p className="empty-note">No hay integrantes activos.</p>
             ) : (
-              composition.map((item) => (
-                <article className="composition-row" key={item.assignmentId}>
-                  <div className="composition-main">
-                    <strong>{item.displayName}</strong>
-                    <span>{roleLabels[item.role] ?? item.role}</span>
-                  </div>
-                  <div className="composition-actions">
-                    <span
-                      className={
-                        item.pendingStart ||
-                        item.pendingEnd ||
-                        item.pendingLabelCorrection
-                          ? "assignment-pending"
-                          : item.validTo
-                            ? "assignment-ended"
-                            : "assignment-active"
-                      }
-                    >
-                      {item.pendingStart
-                        ? "ALTA PENDIENTE"
-                        : item.pendingEnd
-                          ? "BAJA PENDIENTE"
-                          : item.pendingLabelCorrection
-                            ? "CORRECCIÓN PENDIENTE"
-                            : item.validTo
-                              ? "FINALIZADO"
-                              : "ACTIVO"}
-                    </span>
-                    {!item.pendingStart && (
-                      <button
-                        className="assignment-correct"
-                        type="button"
-                        disabled={correctionBusy || rotationBusy || Boolean(endingAssignmentId)}
-                        onClick={() => {
-                          setCorrectionTarget(item);
-                          setCorrectedName(item.displayName);
-                          setRotationTarget(undefined);
-                          setFinalizationTarget(undefined);
-                          setMessage(undefined);
-                        }}
-                      >
-                        Corregir nombre
-                      </button>
-                    )}
-                    {!item.validTo && !item.pendingStart && (
-                      <>
-                        <button
-                          className="assignment-replace"
-                          type="button"
-                          disabled={
-                            Boolean(endingAssignmentId) ||
-                            rotationBusy ||
-                            correctionBusy
-                          }
-                          onClick={() => {
-                            setRotationTarget(item);
-                            setReplacementName("");
-                            setReplacementAt(localDateTimeInput(new Date()));
-                            setCorrectionTarget(undefined);
-                            setFinalizationTarget(undefined);
-                            setMessage(undefined);
-                          }}
-                        >
-                          Reemplazar
-                        </button>
-                        <button
-                          className="assignment-end"
-                          type="button"
-                          disabled={
-                            Boolean(endingAssignmentId) ||
-                            rotationBusy ||
-                            correctionBusy
-                          }
-                          onClick={() => {
-                            setFinalizationTarget(item);
-                            setFinalizationAt(localDateTimeInput(new Date()));
-                            setCorrectionTarget(undefined);
-                            setRotationTarget(undefined);
-                            setMessage(undefined);
-                          }}
-                        >
-                          Finalizar
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </article>
-              ))
+              activeComposition.map(renderCompositionRow)
             )}
           </div>
+
+          {historicalComposition.length > 0 && (
+            <details className="composition-history">
+              <summary>
+                Historial de asignaciones
+                <span>{historicalComposition.length}</span>
+              </summary>
+              <div className="composition-list history-list">
+                {historicalComposition.map(renderCompositionRow)}
+              </div>
+            </details>
+          )}
 
           {finalizationTarget && (
             <form
