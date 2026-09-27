@@ -239,7 +239,7 @@ export async function listRecentWorkSessions(
   limit = 12
 ): Promise<WorkSessionHistoryItem[]> {
   if (!supabase) throw new Error("Supabase is not configured");
-  const key = `work-session-history:${organizationId}`;
+  const key = `work-session-history:v2:${organizationId}`;
 
   try {
     const { data, error } = await supabase
