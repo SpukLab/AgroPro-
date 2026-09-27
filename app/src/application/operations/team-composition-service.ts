@@ -35,6 +35,7 @@ export interface TeamCompositionItem {
   validFrom: string;
   validTo?: string;
   pendingEnd?: boolean;
+  pendingStart?: boolean;
 }
 
 export type AddTeamMemberInput =
@@ -62,7 +63,11 @@ export type AddTeamMemberInput =
       validFrom: string;
     };
 
-function common(input: AddTeamMemberInput) {
+function common(input: {
+  actorId: string;
+  organizationId: string;
+  deviceId: string;
+}) {
   const now = new Date().toISOString();
   return {
     actorId: input.actorId,
@@ -354,4 +359,156 @@ export async function queueEndTeamAssignment(input: {
   }
 
   return command;
+}
+
+
+export interface ReplaceTeamMemberInput {
+  actorId: string;
+  organizationId: string;
+  deviceId: string;
+  operationalTeamId: string;
+  previous: TeamCompositionItem;
+  replacementDisplayName: string;
+  effectiveAt: string;
+}
+
+export async function queueReplaceTeamMember(
+  input: ReplaceTeamMemberInput
+): Promise<{
+  resourceId: string;
+  assignmentId: string;
+  commandIds: [string, string, string];
+  replacement: TeamCompositionItem;
+}> {
+  if (input.previous.validTo) {
+    throw new Error("Cannot replace an assignment that is already closed");
+  }
+
+  const base = common(input);
+  const effectiveAt = new Date(input.effectiveAt).toISOString();
+  const endPayload = createEndTeamAssignmentPayload({
+    assignmentId: input.previous.assignmentId,
+    operationalTeamId: input.operationalTeamId,
+    validFrom: input.previous.validFrom,
+    validTo: effectiveAt,
+    reason: "Reemplazo de integrante"
+  });
+
+  const endCommandId = crypto.randomUUID();
+  const resourceCommandId = crypto.randomUUID();
+  const assignmentCommandId = crypto.randomUUID();
+
+  const endCommand: OfflineCommand<EndTeamAssignmentPayload> = {
+    ...base,
+    clientOperationId: endCommandId,
+    commandType: "operations.end_team_assignment",
+    targetRef: input.previous.assignmentId,
+    payload: endPayload,
+    dependencies: []
+  };
+
+  let resourceId: string;
+  let resourceCommand: OfflineCommand<EquipmentResource | TeamPerson>;
+  let assignment: TeamMemberAssignment;
+
+  if (input.previous.subjectKind === "equipment") {
+    const equipmentType = input.previous.equipmentType as EquipmentType | undefined;
+    if (!equipmentType) {
+      throw new Error("equipmentType is required to replace equipment");
+    }
+
+    const resource = createEquipmentResource({
+      equipmentType,
+      displayName: input.replacementDisplayName
+    });
+    resourceId = resource.id;
+    resourceCommand = {
+      ...base,
+      clientOperationId: resourceCommandId,
+      commandType: "operations.create_equipment",
+      targetRef: resource.id,
+      payload: resource,
+      dependencies: []
+    };
+    assignment = createTeamMemberAssignment({
+      id: crypto.randomUUID(),
+      operationalTeamId: input.operationalTeamId,
+      subjectKind: "equipment",
+      equipmentId: resource.id,
+      role: input.previous.role as TeamMemberRole,
+      validFrom: effectiveAt,
+      reason: "Reemplazo de integrante"
+    });
+  } else {
+    const person = createTeamPerson({
+      displayName: input.replacementDisplayName
+    });
+    resourceId = person.id;
+    resourceCommand = {
+      ...base,
+      clientOperationId: resourceCommandId,
+      commandType: "operations.create_team_person",
+      targetRef: person.id,
+      payload: person,
+      dependencies: []
+    };
+    assignment = createTeamMemberAssignment({
+      id: crypto.randomUUID(),
+      operationalTeamId: input.operationalTeamId,
+      subjectKind: "person",
+      partyId: person.id,
+      role: input.previous.role as TeamMemberRole,
+      validFrom: effectiveAt,
+      reason: "Reemplazo de integrante"
+    });
+  }
+
+  const assignmentCommand: OfflineCommand<TeamMemberAssignment> = {
+    ...base,
+    clientOperationId: assignmentCommandId,
+    commandType: "operations.assign_team_member",
+    targetRef: assignment.id,
+    payload: assignment,
+    dependencies: [endCommandId, resourceCommandId]
+  };
+
+  await enqueueCommand(endCommand);
+  await enqueueCommand(resourceCommand);
+  await enqueueCommand(assignmentCommand);
+
+  const replacement: TeamCompositionItem = {
+    assignmentId: assignment.id,
+    subjectKind: input.previous.subjectKind,
+    subjectId: resourceId,
+    displayName: input.replacementDisplayName.trim(),
+    role: input.previous.role,
+    equipmentType: input.previous.equipmentType,
+    validFrom: effectiveAt,
+    pendingStart: true
+  };
+
+  const key = `team-composition:${input.organizationId}:${input.operationalTeamId}`;
+  const cached = await getEntityCache<TeamCompositionItem[]>(key);
+  if (cached) {
+    await putEntityCache(
+      key,
+      "team-composition",
+      input.operationalTeamId,
+      [
+        ...cached.map((item) =>
+          item.assignmentId === input.previous.assignmentId
+            ? { ...item, validTo: effectiveAt, pendingEnd: true }
+            : item
+        ),
+        replacement
+      ]
+    );
+  }
+
+  return {
+    resourceId,
+    assignmentId: assignment.id,
+    commandIds: [endCommandId, resourceCommandId, assignmentCommandId],
+    replacement
+  };
 }
