@@ -20,6 +20,7 @@ interface AgronomyWorkspaceProps {
   actorId: string;
   deviceId: string;
   syncVersion: number;
+  online: boolean;
   onPendingChanged: () => Promise<void>;
 }
 
@@ -47,6 +48,7 @@ export function AgronomyWorkspace({
   actorId,
   deviceId,
   syncVersion,
+  online,
   onPendingChanged
 }: AgronomyWorkspaceProps) {
   const campaignDefaults = defaultCampaign();
@@ -203,7 +205,9 @@ export function AgronomyWorkspace({
 
       await onPendingChanged();
       setOperationMessage(
-        `Operación ${command.targetRef?.slice(0, 8)}… guardada localmente. Podés sincronizar cuando haya conexión.`
+        online
+          ? `Operación ${command.targetRef?.slice(0, 8)}… guardada localmente y enviada a sincronización.`
+          : `Operación ${command.targetRef?.slice(0, 8)}… guardada localmente. Se sincronizará al recuperar conexión.`
       );
     } catch (error) {
       setOperationMessage(messageOf(error));
@@ -240,7 +244,9 @@ export function AgronomyWorkspace({
 
       await onPendingChanged();
       setExecutionMessage(
-        `Jornada ${queued.session.id.slice(0, 8)}… preparada localmente. Se encadenaron equipo, trabajo y sesión para sincronizar en orden.`
+        online
+          ? `Jornada ${queued.session.id.slice(0, 8)}… preparada localmente y enviada a sincronización.`
+          : `Jornada ${queued.session.id.slice(0, 8)}… preparada localmente. Equipo, trabajo y sesión se sincronizarán en orden al recuperar conexión.`
       );
     } catch (error) {
       setExecutionMessage(messageOf(error));
@@ -368,8 +374,8 @@ export function AgronomyWorkspace({
         <span className="step">NUEVA OPERACIÓN</span>
         <h2>Cosecha</h2>
         <p>
-          Se guarda primero en IndexedDB. La falta de conexión no impide registrar la
-          intención de trabajo.
+          Se guarda primero en IndexedDB. Con conexión se sincroniza automáticamente;
+          sin señal queda pendiente hasta recuperar conectividad.
         </p>
 
         <form className="form-stack" onSubmit={(event) => void handleHarvest(event)}>
@@ -433,7 +439,11 @@ export function AgronomyWorkspace({
           </div>
 
           <button disabled={operationBusy} type="submit">
-            {operationBusy ? "Guardando…" : "Guardar operación offline"}
+            {operationBusy
+              ? "Guardando…"
+              : online
+                ? "Guardar operación"
+                : "Guardar operación offline"}
           </button>
         </form>
 
@@ -508,7 +518,11 @@ export function AgronomyWorkspace({
             </label>
 
             <button disabled={executionBusy} type="submit">
-              {executionBusy ? "Preparando…" : "Preparar jornada offline"}
+              {executionBusy
+              ? "Preparando…"
+              : online
+                ? "Preparar jornada"
+                : "Preparar jornada offline"}
             </button>
           </form>
         )}
@@ -521,6 +535,7 @@ export function AgronomyWorkspace({
         actorId={actorId}
         deviceId={deviceId}
         syncVersion={syncVersion}
+        online={online}
         onPendingChanged={onPendingChanged}
       />
     </>
