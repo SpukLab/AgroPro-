@@ -13,6 +13,7 @@ import {
   type HarvestOperationReadModel
 } from "../application/agronomy/harvest-service";
 import { queueExecutionStart } from "../application/operations/execution-service";
+import { TeamComposition } from "./TeamComposition";
 
 interface AgronomyWorkspaceProps {
   organizationId: string;
@@ -463,9 +464,8 @@ export function AgronomyWorkspace({
         <span className="step">EJECUCIÓN OPERATIVA</span>
         <h2>Nueva jornada</h2>
         <p>
-          Prepara un Operational Team, el trabajo contratista y una WorkSession como
-          comandos offline encadenados. La composición detallada del equipo se agrega
-          como el siguiente incremento.
+          Prepara el equipo operativo, el trabajo y la jornada como comandos offline
+          encadenados para sincronizarlos en orden.
         </p>
 
         {operations.length === 0 ? (
@@ -515,6 +515,14 @@ export function AgronomyWorkspace({
 
         {executionMessage && <p className="message">{executionMessage}</p>}
       </section>
+
+      <TeamComposition
+        organizationId={organizationId}
+        actorId={actorId}
+        deviceId={deviceId}
+        syncVersion={syncVersion}
+        onPendingChanged={onPendingChanged}
+      />
     </>
   );
 }
