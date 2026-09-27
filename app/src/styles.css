@@ -223,7 +223,7 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(143, 209, 79, 0.08);
 }
 
-button:not(.segment):not(.resource-option):not(.assignment-end):not(.assignment-replace):not(.assignment-correct):not(.rotation-cancel):not(.session-close-trigger) {
+button:not(.segment):not(.resource-option):not(.assignment-end):not(.assignment-replace):not(.assignment-correct):not(.rotation-cancel):not(.rotation-correct-trigger):not(.session-close-trigger) {
   width: 100%;
   border: 0;
   border-radius: 14px;
@@ -811,4 +811,23 @@ button:disabled {
   border: 1px solid #4a4132;
   border-radius: 16px;
   background: #120f0a;
+}
+
+
+.rotation-correct-trigger {
+  width: 100%;
+  border: 1px solid #34453c;
+  border-radius: 12px;
+  padding: 11px 12px;
+  color: #c5d0ca;
+  background: #151e19;
+  font-size: 12px;
+  font-weight: 750;
+  text-align: center;
+  cursor: pointer;
+}
+
+.rotation-correct-trigger:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
 }

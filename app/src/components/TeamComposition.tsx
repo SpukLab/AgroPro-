@@ -445,7 +445,7 @@ export function TeamComposition({
                     ? "FINALIZADO"
                     : "ACTIVO"}
           </span>
-          {!item.pendingStart && (
+          {item.validTo && !item.pendingStart && (
             <button
               className="assignment-correct"
               type="button"
@@ -731,6 +731,21 @@ export function TeamComposition({
                   Rol: {roleLabels[rotationTarget.role] ?? rotationTarget.role}. La asignación anterior conserva su horario de finalización.
                 </span>
               </div>
+
+              <button
+                className="rotation-correct-trigger"
+                type="button"
+                disabled={rotationBusy || correctionBusy}
+                onClick={() => {
+                  setCorrectionTarget(rotationTarget);
+                  setCorrectedName(rotationTarget.displayName);
+                  setRotationTarget(undefined);
+                  setReplacementName("");
+                  setMessage(undefined);
+                }}
+              >
+                Solo corregir el nombre
+              </button>
 
               <label>
                 {rotationTarget.subjectKind === "person"
