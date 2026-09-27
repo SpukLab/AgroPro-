@@ -202,6 +202,76 @@ const userHandler = withSupabase({ auth: "user" }, async (req, ctx) => {
         break;
       }
 
+      case "operations.create_equipment": {
+        const equipmentId = stringField(payload, "id")!;
+        if (targetRef !== equipmentId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_create_equipment";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_equipment_id: equipmentId,
+          p_equipment_type: stringField(payload, "equipmentType")!,
+          p_display_name: stringField(payload, "displayName")!,
+          p_make: stringField(payload, "make", { optional: true }) ?? null,
+          p_model: stringField(payload, "model", { optional: true }) ?? null,
+          p_serial_number:
+            stringField(payload, "serialNumber", { optional: true }) ?? null,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
+      case "operations.create_team_person": {
+        const partyId = stringField(payload, "id")!;
+        if (targetRef !== partyId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_create_team_person";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_party_id: partyId,
+          p_display_name: stringField(payload, "displayName")!,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
+      case "operations.assign_team_member": {
+        const assignmentId = stringField(payload, "id")!;
+        if (targetRef !== assignmentId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_assign_team_member";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_assignment_id: assignmentId,
+          p_operational_team_id: stringField(payload, "operationalTeamId")!,
+          p_subject_kind: stringField(payload, "subjectKind")!,
+          p_party_id: stringField(payload, "partyId", { optional: true }) ?? null,
+          p_equipment_id:
+            stringField(payload, "equipmentId", { optional: true }) ?? null,
+          p_role: stringField(payload, "role")!,
+          p_valid_from: stringField(payload, "validFrom")!,
+          p_valid_to: stringField(payload, "validTo", { optional: true }) ?? null,
+          p_reason: stringField(payload, "reason", { optional: true }) ?? null,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
       default:
         return json(
           {
