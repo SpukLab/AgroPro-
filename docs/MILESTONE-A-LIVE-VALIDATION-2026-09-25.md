@@ -112,13 +112,16 @@ El pipeline:
 
 ## E2E físico — checkpoint 2026-09-27
 
-Validado desde **iPhone**:
+Validado en dispositivos físicos:
 
 1. preview abierto correctamente;
 2. signup/login completado;
 3. Organization creada: `Stepanosky Hermanos`;
 4. sesión persistida y backend Supabase accesible;
-5. layout responsive observado en iPhone y aceptado sin cambios de dimensiones.
+5. capturas revisadas desde **iPad**;
+6. acceso posterior desde **iPhone** confirmado por el operador;
+7. layout responsive aceptado en ambos dispositivos sin cambios de dimensiones;
+8. contexto agronómico inicial creado y verificado en Supabase: establecimiento `La cuka`, lote `Lote 2`, 180 ha, campaña `2026/27` del 2026-07-01 al 2027-06-30.
 
 La cuenta de prueba que completó el acceso quedó asociada como `owner`. La recuperación de contraseña se incorporó a la aplicación; la entrega del correo de recovery mediante el mailer estándar de Supabase queda como asunto separado de infraestructura de correo y no bloquea el E2E funcional.
 
@@ -126,12 +129,11 @@ La cuenta de prueba que completó el acceso quedó asociada como `owner`. La rec
 
 La infraestructura ya no es el bloqueo. El recorrido físico continúa desde el punto 4:
 
-1. crear establecimiento/lote/campaña;
-2. crear cosecha con conectividad disponible;
-3. repetir creación offline y comprobar outbox;
-4. reconectar y sincronizar;
-5. confirmar read model en PostgreSQL;
-6. instalar como PWA / añadir a inicio;
-7. recargar sin red y confirmar continuidad mínima.
+1. crear cosecha con conectividad disponible;
+2. repetir creación offline y comprobar outbox;
+3. reconectar y sincronizar;
+4. confirmar read model en PostgreSQL;
+5. instalar como PWA / añadir a inicio;
+6. recargar sin red y confirmar continuidad mínima.
 
 No avanzar a Operational Team / WorkSession hasta registrar esta evidencia o un bloqueo específico de Safari/iOS.
