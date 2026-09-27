@@ -8,7 +8,7 @@ Registrar evidencia verificable del paso desde contrato/CI a backend real antes 
 
 **Backend live: validado.**  
 **Preview PWA: publicado.**  
-**E2E interactivo en dispositivo físico: pendiente.**
+**E2E interactivo en dispositivo físico: en curso.**
 
 Preview técnico:
 
@@ -110,21 +110,28 @@ El pipeline:
 - falla si detecta un token real con formato `sb_secret_...`;
 - publica únicamente el artefacto estático preparado.
 
+## E2E físico — checkpoint 2026-09-27
+
+Validado desde **iPhone**:
+
+1. preview abierto correctamente;
+2. signup/login completado;
+3. Organization creada: `Stepanosky Hermanos`;
+4. sesión persistida y backend Supabase accesible;
+5. layout responsive observado en iPhone y aceptado sin cambios de dimensiones.
+
+La cuenta de prueba que completó el acceso quedó asociada como `owner`. La recuperación de contraseña se incorporó a la aplicación; la entrega del correo de recovery mediante el mailer estándar de Supabase queda como asunto separado de infraestructura de correo y no bloquea el E2E funcional.
+
 ## Pendiente real para cerrar Milestone A
 
-La infraestructura ya no es el bloqueo.
+La infraestructura ya no es el bloqueo. El recorrido físico continúa desde el punto 4:
 
-Falta probar desde iPhone/iPad:
-
-1. abrir el preview;
-2. signup/login;
-3. crear Organization;
-4. crear establecimiento/lote/campaña;
-5. crear cosecha con conectividad disponible;
-6. repetir creación offline y comprobar outbox;
-7. reconectar y sincronizar;
-8. confirmar read model;
-9. instalar como PWA / añadir a inicio;
-10. recargar sin red y confirmar continuidad mínima.
+1. crear establecimiento/lote/campaña;
+2. crear cosecha con conectividad disponible;
+3. repetir creación offline y comprobar outbox;
+4. reconectar y sincronizar;
+5. confirmar read model en PostgreSQL;
+6. instalar como PWA / añadir a inicio;
+7. recargar sin red y confirmar continuidad mínima.
 
 No avanzar a Operational Team / WorkSession hasta registrar esta evidencia o un bloqueo específico de Safari/iOS.
