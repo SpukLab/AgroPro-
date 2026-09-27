@@ -39,6 +39,18 @@ function numberField(source: UnknownRecord, key: string): number {
   return value;
 }
 
+function targetMismatch(clientOperationId: string) {
+  return json(
+    {
+      clientOperationId,
+      status: "rejected",
+      processedAt: new Date().toISOString(),
+      errorCode: "target_ref_mismatch",
+    },
+    400,
+  );
+}
+
 const userHandler = withSupabase({ auth: "user" }, async (req, ctx) => {
   if (req.method !== "POST") {
     return json({ code: "method_not_allowed" }, 405);
@@ -82,18 +94,6 @@ const userHandler = withSupabase({ auth: "user" }, async (req, ctx) => {
       );
     }
 
-    if (commandType !== "agronomy.create_harvest_operation") {
-      return json(
-        {
-          clientOperationId,
-          status: "rejected",
-          processedAt: new Date().toISOString(),
-          errorCode: "unsupported_command",
-        },
-        400,
-      );
-    }
-
     if (!isRecord(body.payload)) {
       return json(
         {
@@ -107,47 +107,114 @@ const userHandler = withSupabase({ auth: "user" }, async (req, ctx) => {
     }
 
     const payload = body.payload;
-    const operationId = stringField(payload, "id")!;
-    const fieldId = stringField(payload, "fieldId")!;
-    const campaignId = stringField(payload, "campaignId")!;
-    const cropCode =
-      stringField(payload, "cropCode", { optional: true }) ??
-      stringField(payload, "cropId")!;
-    const plannedAreaHa = numberField(payload, "plannedAreaHa");
-    const plannedFrom = stringField(payload, "plannedFrom")!;
-    const plannedTo = stringField(payload, "plannedTo")!;
+    let rpcName: string;
+    let rpcArgs: Record<string, unknown>;
 
-    if (targetRef !== operationId) {
-      return json(
-        {
-          clientOperationId,
-          status: "rejected",
-          processedAt: new Date().toISOString(),
-          errorCode: "target_ref_mismatch",
-        },
-        400,
-      );
+    switch (commandType) {
+      case "agronomy.create_harvest_operation": {
+        const operationId = stringField(payload, "id")!;
+        if (targetRef !== operationId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_create_harvest_operation";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_operation_id: operationId,
+          p_field_id: stringField(payload, "fieldId")!,
+          p_campaign_id: stringField(payload, "campaignId")!,
+          p_crop_code:
+            stringField(payload, "cropCode", { optional: true }) ??
+            stringField(payload, "cropId")!,
+          p_planned_area_ha: numberField(payload, "plannedAreaHa"),
+          p_planned_from: stringField(payload, "plannedFrom")!,
+          p_planned_to: stringField(payload, "plannedTo")!,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
+      case "operations.create_operational_team": {
+        const teamId = stringField(payload, "id")!;
+        if (targetRef !== teamId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_create_operational_team";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_team_id: teamId,
+          p_name: stringField(payload, "name")!,
+          p_team_type: stringField(payload, "teamType")!,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
+      case "contractor.create_job": {
+        const jobId = stringField(payload, "id")!;
+        if (targetRef !== jobId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_create_contractor_job";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_job_id: jobId,
+          p_agricultural_operation_id: stringField(
+            payload,
+            "agriculturalOperationId",
+          )!,
+          p_operational_team_id: stringField(payload, "operationalTeamId")!,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
+      case "contractor.start_work_session": {
+        const sessionId = stringField(payload, "id")!;
+        if (targetRef !== sessionId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_start_work_session";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_session_id: sessionId,
+          p_contractor_job_id: stringField(payload, "contractorJobId")!,
+          p_operational_team_id:
+            stringField(payload, "operationalTeamId", { optional: true }) ?? null,
+          p_started_at: stringField(payload, "startedAt")!,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
+      default:
+        return json(
+          {
+            clientOperationId,
+            status: "rejected",
+            processedAt: new Date().toISOString(),
+            errorCode: "unsupported_command",
+          },
+          400,
+        );
     }
 
-    const { data, error } = await ctx.supabaseAdmin.rpc(
-      "process_create_harvest_operation",
-      {
-        p_organization_id: tenantScope,
-        p_client_operation_id: clientOperationId,
-        p_actor_user_id: actorUserId,
-        p_device_id: deviceId,
-        p_operation_id: operationId,
-        p_field_id: fieldId,
-        p_campaign_id: campaignId,
-        p_crop_code: cropCode,
-        p_planned_area_ha: plannedAreaHa,
-        p_planned_from: plannedFrom,
-        p_planned_to: plannedTo,
-        p_occurred_at_local: occurredAtLocal,
-        p_queued_at_local: queuedAtLocal,
-        p_schema_version: schemaVersion,
-      },
-    );
+    const { data, error } = await ctx.supabaseAdmin.rpc(rpcName, rpcArgs);
 
     if (error) {
       const code = error.code ?? "database_command_failed";
@@ -179,6 +246,7 @@ const userHandler = withSupabase({ auth: "user" }, async (req, ctx) => {
       console.error("sync-command database error", {
         code,
         message: error.message,
+        commandType,
         clientOperationId,
       });
 
