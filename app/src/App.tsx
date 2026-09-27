@@ -4,9 +4,11 @@ import type { Session } from "@supabase/supabase-js";
 import { AgronomyWorkspace } from "./components/AgronomyWorkspace";
 import {
   getCurrentSession,
+  requestPasswordReset,
   signInWithEmail,
   signOut,
-  signUpWithEmail
+  signUpWithEmail,
+  updatePassword
 } from "./application/auth/auth-service";
 import {
   bootstrapOrganization,
@@ -22,7 +24,7 @@ import { createSupabaseSyncTransport } from "./infra/supabase/sync-transport";
 import { isSupabaseConfigured, supabase } from "./infra/supabase/client";
 import "./styles.css";
 
-type AuthMode = "signin" | "signup";
+type AuthMode = "signin" | "signup" | "forgot";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Ocurrió un error inesperado";
@@ -34,6 +36,7 @@ export default function App() {
   const [authMode, setAuthMode] = useState<AuthMode>("signin");
   const [authBusy, setAuthBusy] = useState(false);
   const [authMessage, setAuthMessage] = useState<string>();
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [memberships, setMemberships] = useState<OrganizationMembership[]>([]);
   const [membershipsLoading, setMembershipsLoading] = useState(false);
   const [activeOrganizationId, setActiveOrganizationId] = useState<string>();
@@ -88,9 +91,12 @@ export default function App() {
         if (mounted) setSessionLoading(false);
       });
 
-    const subscription = supabase?.auth.onAuthStateChange((_event, nextSession) => {
+    const subscription = supabase?.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
       setAuthMessage(undefined);
+      if (event === "PASSWORD_RECOVERY") {
+        setPasswordRecovery(true);
+      }
     });
 
     void refreshPending();
@@ -127,6 +133,21 @@ export default function App() {
       return;
     }
 
+    if (authMode === "forgot") {
+      setAuthBusy(true);
+      try {
+        await requestPasswordReset(email);
+        setAuthMessage(
+          "Te enviamos un enlace para elegir una nueva contraseña. Revisá tu correo."
+        );
+      } catch (error) {
+        setAuthMessage(errorMessage(error));
+      } finally {
+        setAuthBusy(false);
+      }
+      return;
+    }
+
     if (password.length < 8) {
       setAuthMessage("La contraseña debe tener al menos 8 caracteres.");
       return;
@@ -148,6 +169,39 @@ export default function App() {
       } else if (result.session) {
         setSession(result.session);
       }
+    } catch (error) {
+      setAuthMessage(errorMessage(error));
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  async function handlePasswordRecoverySubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+    setAuthMessage(undefined);
+
+    const form = new FormData(event.currentTarget);
+    const password = String(form.get("password") ?? "");
+    const confirmation = String(form.get("passwordConfirmation") ?? "");
+
+    if (password.length < 8) {
+      setAuthMessage("La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+
+    if (password !== confirmation) {
+      setAuthMessage("Las contraseñas no coinciden.");
+      return;
+    }
+
+    setAuthBusy(true);
+    try {
+      await updatePassword(password);
+      setPasswordRecovery(false);
+      setAuthMode("signin");
+      setAuthMessage("Contraseña actualizada.");
     } catch (error) {
       setAuthMessage(errorMessage(error));
     } finally {
@@ -263,6 +317,54 @@ export default function App() {
     );
   }
 
+  if (passwordRecovery && session) {
+    return (
+      <main className="shell auth-shell">
+        <section className="auth-brand">
+          <span className="eyebrow">SURKARA</span>
+          <h1>Elegí una nueva contraseña.</h1>
+          <p>
+            El enlace de recuperación ya fue validado. Definí una contraseña nueva
+            para continuar.
+          </p>
+        </section>
+
+        <section className="card auth-card">
+          <form
+            className="form-stack"
+            onSubmit={(event) => void handlePasswordRecoverySubmit(event)}
+          >
+            <label>
+              Nueva contraseña
+              <input
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                minLength={8}
+                required
+              />
+            </label>
+            <label>
+              Repetir contraseña
+              <input
+                name="passwordConfirmation"
+                type="password"
+                autoComplete="new-password"
+                minLength={8}
+                required
+              />
+            </label>
+            <button disabled={authBusy} type="submit">
+              {authBusy ? "Guardando…" : "Guardar nueva contraseña"}
+            </button>
+          </form>
+
+          {authMessage && <p className="message">{authMessage}</p>}
+        </section>
+      </main>
+    );
+  }
+
   if (!session) {
     return (
       <main className="shell auth-shell">
@@ -276,28 +378,30 @@ export default function App() {
         </section>
 
         <section className="card auth-card">
-          <div className="segmented" aria-label="Modo de acceso">
-            <button
-              className={authMode === "signin" ? "segment active" : "segment"}
-              type="button"
-              onClick={() => {
-                setAuthMode("signin");
-                setAuthMessage(undefined);
-              }}
-            >
-              Ingresar
-            </button>
-            <button
-              className={authMode === "signup" ? "segment active" : "segment"}
-              type="button"
-              onClick={() => {
-                setAuthMode("signup");
-                setAuthMessage(undefined);
-              }}
-            >
-              Crear cuenta
-            </button>
-          </div>
+          {authMode !== "forgot" && (
+            <div className="segmented" aria-label="Modo de acceso">
+              <button
+                className={authMode === "signin" ? "segment active" : "segment"}
+                type="button"
+                onClick={() => {
+                  setAuthMode("signin");
+                  setAuthMessage(undefined);
+                }}
+              >
+                Ingresar
+              </button>
+              <button
+                className={authMode === "signup" ? "segment active" : "segment"}
+                type="button"
+                onClick={() => {
+                  setAuthMode("signup");
+                  setAuthMessage(undefined);
+                }}
+              >
+                Crear cuenta
+              </button>
+            </div>
+          )}
 
           <form className="form-stack" onSubmit={(event) => void handleAuthSubmit(event)}>
             <label>
@@ -310,24 +414,54 @@ export default function App() {
                 required
               />
             </label>
-            <label>
-              Contraseña
-              <input
-                name="password"
-                type="password"
-                autoComplete={authMode === "signin" ? "current-password" : "new-password"}
-                minLength={8}
-                required
-              />
-            </label>
+            {authMode !== "forgot" && (
+              <label>
+                Contraseña
+                <input
+                  name="password"
+                  type="password"
+                  autoComplete={authMode === "signin" ? "current-password" : "new-password"}
+                  minLength={8}
+                  required
+                />
+              </label>
+            )}
             <button disabled={authBusy} type="submit">
               {authBusy
                 ? "Procesando…"
                 : authMode === "signin"
                   ? "Ingresar"
-                  : "Crear cuenta"}
+                  : authMode === "signup"
+                    ? "Crear cuenta"
+                    : "Enviar enlace de recuperación"}
             </button>
           </form>
+
+          {authMode === "signin" && (
+            <button
+              className="button-secondary"
+              type="button"
+              onClick={() => {
+                setAuthMode("forgot");
+                setAuthMessage(undefined);
+              }}
+            >
+              Olvidé mi contraseña
+            </button>
+          )}
+
+          {authMode === "forgot" && (
+            <button
+              className="button-secondary"
+              type="button"
+              onClick={() => {
+                setAuthMode("signin");
+                setAuthMessage(undefined);
+              }}
+            >
+              Volver a ingresar
+            </button>
+          )}
 
           {authMessage && <p className="message">{authMessage}</p>}
         </section>
