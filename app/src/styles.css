@@ -223,7 +223,7 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(143, 209, 79, 0.08);
 }
 
-button:not(.segment):not(.resource-option):not(.assignment-end):not(.assignment-replace):not(.assignment-correct):not(.rotation-cancel) {
+button:not(.segment):not(.resource-option):not(.assignment-end):not(.assignment-replace):not(.assignment-correct):not(.rotation-cancel):not(.session-close-trigger) {
   width: 100%;
   border: 0;
   border-radius: 14px;
@@ -767,4 +767,48 @@ button:disabled {
 
 .history-list {
   margin-top: 8px;
+}
+
+
+.execution-summary {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.session-summary-main {
+  min-width: 0;
+}
+
+.session-summary-main strong,
+.session-summary-main span {
+  display: block;
+}
+
+.session-summary-main span {
+  margin-top: 4px;
+}
+
+.session-close-trigger {
+  width: auto;
+  border: 1px solid #4a4132;
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: #f4d3a2;
+  background: #15110b;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.session-close-trigger:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+}
+
+.session-close-form {
+  margin: 0 0 18px;
+  padding: 16px;
+  border: 1px solid #4a4132;
+  border-radius: 16px;
+  background: #120f0a;
 }

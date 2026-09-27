@@ -4,8 +4,10 @@ import {
 } from "../../domain/operations/operational-team";
 import {
   createContractorJob,
+  createEndWorkSessionPayload,
   startWorkSession,
   type ContractorJob,
+  type EndWorkSessionPayload,
   type WorkSession
 } from "../../domain/operations/work-session";
 import type { OfflineCommand } from "../../domain/sync/types";
@@ -27,7 +29,11 @@ export interface QueuedExecution {
   commandIds: [string, string, string];
 }
 
-function baseCommand(input: QueueExecutionInput) {
+function baseCommand(input: {
+  actorId: string;
+  organizationId: string;
+  deviceId: string;
+}) {
   const now = new Date().toISOString();
 
   return {
@@ -101,4 +107,36 @@ export async function queueExecutionStart(
     session,
     commandIds: [teamCommandId, jobCommandId, sessionCommandId]
   };
+}
+
+
+export async function queueEndWorkSession(input: {
+  actorId: string;
+  organizationId: string;
+  deviceId: string;
+  sessionId: string;
+  startedAt: string;
+  expectedRevision: number;
+  endedAt: string;
+}): Promise<OfflineCommand<EndWorkSessionPayload>> {
+  const payload = createEndWorkSessionPayload({
+    sessionId: input.sessionId,
+    startedAt: input.startedAt,
+    expectedRevision: input.expectedRevision,
+    endedAt: input.endedAt
+  });
+
+  const common = baseCommand(input);
+  const command: OfflineCommand<EndWorkSessionPayload> = {
+    ...common,
+    clientOperationId: crypto.randomUUID(),
+    commandType: "contractor.end_work_session",
+    targetRef: input.sessionId,
+    baseRevision: input.expectedRevision,
+    payload,
+    dependencies: []
+  };
+
+  await enqueueCommand(command);
+  return command;
 }

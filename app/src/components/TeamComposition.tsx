@@ -14,6 +14,7 @@ import type {
   EquipmentType,
   TeamMemberRole
 } from "../domain/operations/team-resource";
+import { queueEndWorkSession } from "../application/operations/execution-service";
 
 interface TeamCompositionProps {
   organizationId: string;
@@ -99,6 +100,10 @@ export function TeamComposition({
   const [contexts, setContexts] = useState<ActiveExecutionContext[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState("");
   const [composition, setComposition] = useState<TeamCompositionItem[]>([]);
+  const [sessionCloseOpen, setSessionCloseOpen] = useState(false);
+  const [sessionCloseAt, setSessionCloseAt] = useState(localDateTimeInput(new Date()));
+  const [sessionCloseBusy, setSessionCloseBusy] = useState(false);
+  const [sessionClosePendingId, setSessionClosePendingId] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [endingAssignmentId, setEndingAssignmentId] = useState<string>();
   const [finalizationTarget, setFinalizationTarget] = useState<TeamCompositionItem>();
@@ -325,6 +330,41 @@ export function TeamComposition({
     }
   }
 
+  async function handleCloseSession(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selected || sessionCloseBusy || sessionClosePendingId === selected.sessionId) {
+      return;
+    }
+
+    setSessionCloseBusy(true);
+    setMessage(undefined);
+
+    try {
+      await queueEndWorkSession({
+        actorId,
+        organizationId,
+        deviceId,
+        sessionId: selected.sessionId,
+        startedAt: selected.startedAt,
+        expectedRevision: selected.revision,
+        endedAt: new Date(sessionCloseAt).toISOString()
+      });
+
+      setSessionClosePendingId(selected.sessionId);
+      setSessionCloseOpen(false);
+      await onPendingChanged();
+      setMessage(
+        online
+          ? `Cierre de jornada preparado para ${selected.teamName} y enviado a sincronización.`
+          : `Cierre de jornada guardado offline para ${selected.teamName}. Se sincronizará al recuperar conexión.`
+      );
+    } catch (error) {
+      setMessage(messageOf(error));
+    } finally {
+      setSessionCloseBusy(false);
+    }
+  }
+
   async function handleAddMember(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selected) return;
@@ -495,12 +535,75 @@ export function TeamComposition({
           )}
 
           {selected && (
-            <div className="execution-summary">
-              <strong>{selected.teamName}</strong>
-              <span>
-                {selected.cropCode} · {selected.fieldName} · jornada activa
-              </span>
-            </div>
+            <>
+              <div className="execution-summary">
+                <div className="session-summary-main">
+                  <strong>{selected.teamName}</strong>
+                  <span>
+                    {selected.cropCode} · {selected.fieldName} · jornada activa
+                  </span>
+                </div>
+                <button
+                  className="session-close-trigger"
+                  type="button"
+                  disabled={sessionClosePendingId === selected.sessionId}
+                  onClick={() => {
+                    setSessionCloseOpen(true);
+                    setSessionCloseAt(localDateTimeInput(new Date()));
+                    setCorrectionTarget(undefined);
+                    setRotationTarget(undefined);
+                    setFinalizationTarget(undefined);
+                    setMessage(undefined);
+                  }}
+                >
+                  {sessionClosePendingId === selected.sessionId
+                    ? "CIERRE PENDIENTE"
+                    : "Cerrar jornada"}
+                </button>
+              </div>
+
+              {sessionCloseOpen && (
+                <form
+                  className="form-stack session-close-form"
+                  onSubmit={(event) => void handleCloseSession(event)}
+                >
+                  <div className="rotation-heading">
+                    <strong>Cerrar jornada</strong>
+                    <span>
+                      Finaliza esta sesión de trabajo. No borra el equipo ni sus asignaciones históricas.
+                    </span>
+                  </div>
+
+                  <label>
+                    Fin de jornada
+                    <input
+                      type="datetime-local"
+                      value={sessionCloseAt}
+                      onChange={(event) => setSessionCloseAt(event.target.value)}
+                      required
+                    />
+                  </label>
+
+                  <div className="rotation-buttons">
+                    <button
+                      className="rotation-cancel"
+                      type="button"
+                      disabled={sessionCloseBusy}
+                      onClick={() => setSessionCloseOpen(false)}
+                    >
+                      Cancelar
+                    </button>
+                    <button disabled={sessionCloseBusy} type="submit">
+                      {sessionCloseBusy
+                        ? "Cerrando…"
+                        : online
+                          ? "Confirmar cierre"
+                          : "Guardar cierre offline"}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </>
           )}
 
           <div className="composition-list">

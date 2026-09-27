@@ -23,6 +23,7 @@ export interface ActiveExecutionContext {
   cropCode: string;
   fieldName: string;
   startedAt: string;
+  revision: number;
 }
 
 export interface TeamCompositionItem {
@@ -180,7 +181,7 @@ export async function listActiveExecutionContexts(
     const { data, error } = await supabase
       .from("work_sessions")
       .select(
-        "id, started_at, operational_team_id, operational_teams!inner(name), contractor_jobs!inner(agricultural_operation_id, agricultural_operations!inner(crop_code, fields!inner(name)))"
+        "id, started_at, revision, operational_team_id, operational_teams!inner(name), contractor_jobs!inner(agricultural_operation_id, agricultural_operations!inner(crop_code, fields!inner(name)))"
       )
       .eq("organization_id", organizationId)
       .eq("status", "active")
@@ -202,7 +203,8 @@ export async function listActiveExecutionContexts(
         agriculturalOperationId: job.agricultural_operation_id,
         cropCode: job.agricultural_operations.crop_code,
         fieldName: job.agricultural_operations.fields.name,
-        startedAt: row.started_at as string
+        startedAt: row.started_at as string,
+        revision: Number(row.revision)
       };
     });
 
