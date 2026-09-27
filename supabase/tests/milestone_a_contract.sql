@@ -27,7 +27,10 @@ begin
          'process_setup_agronomy_context',
          'process_create_operational_team',
          'process_create_contractor_job',
-         'process_start_work_session'
+         'process_start_work_session',
+         'process_create_equipment',
+         'process_create_team_person',
+         'process_assign_team_member'
        )
        and p.prosrc like '%public.digest(%'
   ) then
