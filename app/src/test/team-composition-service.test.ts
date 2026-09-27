@@ -2,6 +2,7 @@ import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   queueEndTeamAssignment,
+  queueReplaceTeamMember,
   queueTeamMember
 } from "../application/operations/team-composition-service";
 import { clearLocalDataForTests } from "../infra/local/outbox";
@@ -53,6 +54,50 @@ describe("queueTeamMember", () => {
     expect(resource?.commandType).toBe("operations.create_team_person");
     expect(assignment?.commandType).toBe("operations.assign_team_member");
     expect(assignment?.dependencies).toEqual([resourceId]);
+  });
+
+  it("queues replacement as close + new resource + dependent new assignment", async () => {
+    const queued = await queueReplaceTeamMember({
+      actorId: "actor-1",
+      organizationId: "org-1",
+      deviceId: "device-1",
+      operationalTeamId: "team-1",
+      previous: {
+        assignmentId: "old-assignment",
+        subjectKind: "person",
+        subjectId: "old-person",
+        displayName: "Operador mañana",
+        role: "harvester_operator",
+        validFrom: "2026-09-27T08:00:00-03:00"
+      },
+      replacementDisplayName: "Operador tarde",
+      effectiveAt: "2026-09-27T14:00:00-03:00"
+    });
+
+    const [endId, resourceId, assignmentId] = queued.commandIds;
+    const end = await surkaraDb.outbox.get(endId);
+    const resource = await surkaraDb.outbox.get(resourceId);
+    const assignment = await surkaraDb.outbox.get(assignmentId);
+
+    expect(end?.commandType).toBe("operations.end_team_assignment");
+    expect(end?.dependencies).toEqual([]);
+
+    expect(resource?.commandType).toBe("operations.create_team_person");
+    expect(resource?.dependencies).toEqual([]);
+
+    expect(assignment?.commandType).toBe("operations.assign_team_member");
+    expect(assignment?.dependencies).toEqual([endId, resourceId]);
+    expect(assignment?.payload).toMatchObject({
+      operationalTeamId: "team-1",
+      role: "harvester_operator",
+      validFrom: new Date("2026-09-27T14:00:00-03:00").toISOString()
+    });
+
+    expect(queued.replacement).toMatchObject({
+      displayName: "Operador tarde",
+      role: "harvester_operator",
+      pendingStart: true
+    });
   });
 
   it("queues assignment closure as a single offline command", async () => {

@@ -4,6 +4,7 @@ import {
   listActiveExecutionContexts,
   listTeamComposition,
   queueEndTeamAssignment,
+  queueReplaceTeamMember,
   queueTeamMember,
   type ActiveExecutionContext,
   type TeamCompositionItem
@@ -99,6 +100,10 @@ export function TeamComposition({
   const [composition, setComposition] = useState<TeamCompositionItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [endingAssignmentId, setEndingAssignmentId] = useState<string>();
+  const [rotationTarget, setRotationTarget] = useState<TeamCompositionItem>();
+  const [replacementName, setReplacementName] = useState("");
+  const [replacementAt, setReplacementAt] = useState(localDateTimeInput(new Date()));
+  const [rotationBusy, setRotationBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string>();
   const [preset, setPreset] = useState<ResourcePreset>("harvester");
@@ -191,6 +196,56 @@ export function TeamComposition({
       setMessage(messageOf(error));
     } finally {
       setEndingAssignmentId(undefined);
+    }
+  }
+
+  async function handleReplaceMember(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selected || !rotationTarget) return;
+
+    const name = replacementName.trim();
+    if (!name) {
+      setMessage("Ingresá el nombre o identificación del reemplazo.");
+      return;
+    }
+
+    setRotationBusy(true);
+    setMessage(undefined);
+
+    try {
+      const result = await queueReplaceTeamMember({
+        actorId,
+        organizationId,
+        deviceId,
+        operationalTeamId: selected.teamId,
+        previous: rotationTarget,
+        replacementDisplayName: name,
+        effectiveAt: new Date(replacementAt).toISOString()
+      });
+
+      const closedAt = result.replacement.validFrom;
+      setComposition((current) => [
+        ...current.map((item) =>
+          item.assignmentId === rotationTarget.assignmentId
+            ? { ...item, validTo: closedAt, pendingEnd: true }
+            : item
+        ),
+        result.replacement
+      ]);
+
+      await onPendingChanged();
+      setMessage(
+        online
+          ? `Reemplazo preparado: ${rotationTarget.displayName} → ${name}. Se enviaron 3 comandos encadenados a sincronización.`
+          : `Reemplazo guardado offline: ${rotationTarget.displayName} → ${name}. Hay 3 comandos encadenados pendientes.`
+      );
+      setRotationTarget(undefined);
+      setReplacementName("");
+      setReplacementAt(localDateTimeInput(new Date()));
+    } catch (error) {
+      setMessage(messageOf(error));
+    } finally {
+      setRotationBusy(false);
     }
   }
 
@@ -294,32 +349,115 @@ export function TeamComposition({
                   <div className="composition-actions">
                     <span
                       className={
-                        item.pendingEnd
+                        item.pendingStart || item.pendingEnd
                           ? "assignment-pending"
                           : item.validTo
                             ? "assignment-ended"
                             : "assignment-active"
                       }
                     >
-                      {item.pendingEnd ? "PENDIENTE" : item.validTo ? "FINALIZADO" : "ACTIVO"}
+                      {item.pendingStart
+                        ? "ALTA PENDIENTE"
+                        : item.pendingEnd
+                          ? "BAJA PENDIENTE"
+                          : item.validTo
+                            ? "FINALIZADO"
+                            : "ACTIVO"}
                     </span>
-                    {!item.validTo && (
-                      <button
-                        className="assignment-end"
-                        type="button"
-                        disabled={Boolean(endingAssignmentId)}
-                        onClick={() => void handleEndAssignment(item)}
-                      >
-                        {endingAssignmentId === item.assignmentId
-                          ? "Marcando…"
-                          : "Finalizar"}
-                      </button>
+                    {!item.validTo && !item.pendingStart && (
+                      <>
+                        <button
+                          className="assignment-replace"
+                          type="button"
+                          disabled={Boolean(endingAssignmentId) || rotationBusy}
+                          onClick={() => {
+                            setRotationTarget(item);
+                            setReplacementName("");
+                            setReplacementAt(localDateTimeInput(new Date()));
+                            setMessage(undefined);
+                          }}
+                        >
+                          Reemplazar
+                        </button>
+                        <button
+                          className="assignment-end"
+                          type="button"
+                          disabled={Boolean(endingAssignmentId) || rotationBusy}
+                          onClick={() => void handleEndAssignment(item)}
+                        >
+                          {endingAssignmentId === item.assignmentId
+                            ? "Marcando…"
+                            : "Finalizar"}
+                        </button>
+                      </>
                     )}
                   </div>
                 </article>
               ))
             )}
           </div>
+
+          {rotationTarget && (
+            <form
+              className="form-stack rotation-form"
+              onSubmit={(event) => void handleReplaceMember(event)}
+            >
+              <div className="rotation-heading">
+                <strong>Reemplazar {rotationTarget.displayName}</strong>
+                <span>
+                  Rol: {roleLabels[rotationTarget.role] ?? rotationTarget.role}. La asignación anterior conserva su horario de finalización.
+                </span>
+              </div>
+
+              <label>
+                {rotationTarget.subjectKind === "person"
+                  ? "Nombre del operador reemplazante"
+                  : "Nombre / identificación del recurso reemplazante"}
+                <input
+                  value={replacementName}
+                  onChange={(event) => setReplacementName(event.target.value)}
+                  placeholder={
+                    rotationTarget.subjectKind === "person"
+                      ? "Ej. Operador turno tarde"
+                      : "Ej. Reemplazo 2"
+                  }
+                  maxLength={120}
+                  required
+                />
+              </label>
+
+              <label>
+                Reemplazo efectivo desde
+                <input
+                  type="datetime-local"
+                  value={replacementAt}
+                  onChange={(event) => setReplacementAt(event.target.value)}
+                  required
+                />
+              </label>
+
+              <div className="rotation-buttons">
+                <button
+                  className="rotation-cancel"
+                  type="button"
+                  disabled={rotationBusy}
+                  onClick={() => {
+                    setRotationTarget(undefined);
+                    setReplacementName("");
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button disabled={rotationBusy} type="submit">
+                  {rotationBusy
+                    ? "Preparando…"
+                    : online
+                      ? "Confirmar reemplazo"
+                      : "Guardar reemplazo offline"}
+                </button>
+              </div>
+            </form>
+          )}
 
           <form className="form-stack member-form" onSubmit={(event) => void handleAddMember(event)}>
             <div className="member-form-heading">
