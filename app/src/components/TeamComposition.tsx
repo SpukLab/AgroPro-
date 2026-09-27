@@ -660,6 +660,27 @@ export function TeamComposition({
         <>
           <p>No hay una jornada activa confirmada todavía.</p>
 
+          {openJobs.length > 1 && (
+            <label className="standalone-label">
+              Trabajo abierto
+              <select
+                value={selectedOpenJob?.jobId ?? ""}
+                onChange={(event) => {
+                  setSelectedOpenJobId(event.target.value);
+                  setResumeOpen(false);
+                  setJobCompleteOpen(false);
+                  setMessage(undefined);
+                }}
+              >
+                {openJobs.map((job) => (
+                  <option key={job.jobId} value={job.jobId}>
+                    {job.cropCode} · {job.fieldName} · {job.teamName}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
           {selectedOpenJob && (
               <div className="resume-session-card">
                 <div>
