@@ -1,6 +1,7 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  queueCompleteContractorJob,
   queueEndWorkSession,
   queueExecutionStart,
   queueExistingWorkSessionStart
@@ -66,6 +67,27 @@ describe("execution service", () => {
       contractorJobId: "job-1",
       operationalTeamId: "team-1",
       startedAt: "2026-09-28T08:00:00-03:00"
+    });
+  });
+
+  it("queues contractor job completion with base revision", async () => {
+    const command = await queueCompleteContractorJob({
+      actorId: "actor-1",
+      organizationId: "org-1",
+      deviceId: "device-1",
+      jobId: "job-1",
+      expectedRevision: 2
+    });
+
+    const stored = await surkaraDb.outbox.get(command.clientOperationId);
+
+    expect(stored?.commandType).toBe("contractor.complete_job");
+    expect(stored?.targetRef).toBe("job-1");
+    expect(stored?.baseRevision).toBe(2);
+    expect(stored?.dependencies).toEqual([]);
+    expect(stored?.payload).toEqual({
+      jobId: "job-1",
+      expectedRevision: 2
     });
   });
 
