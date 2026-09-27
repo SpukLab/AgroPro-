@@ -660,15 +660,12 @@ export function TeamComposition({
         <>
           <p>No hay una jornada activa confirmada todavía.</p>
 
-          {sessionHistory[0] &&
-            !["completed", "cancelled"].includes(
-              sessionHistory[0].contractorJobStatus
-            ) && (
+          {selectedOpenJob && (
               <div className="resume-session-card">
                 <div>
                   <strong>Trabajo en curso</strong>
                   <span>
-                    {sessionHistory[0].cropCode} · {sessionHistory[0].fieldName} · {sessionHistory[0].teamName}
+                    {selectedOpenJob.cropCode} · {selectedOpenJob.fieldName} · {selectedOpenJob.teamName}
                   </span>
                 </div>
 
