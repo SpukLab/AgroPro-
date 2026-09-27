@@ -3,6 +3,7 @@ import {
   WorkSessionRevisionConflictError,
   closeWorkSession,
   createContractorJob,
+  createEndWorkSessionPayload,
   startWorkSession
 } from "../domain/operations/work-session";
 
@@ -24,6 +25,32 @@ describe("WorkSession", () => {
     expect(job.status).toBe("ready");
     expect(session.status).toBe("active");
     expect(session.operationalTeamId).toBe("team-1");
+  });
+
+  it("builds a revision-aware closure payload", () => {
+    expect(
+      createEndWorkSessionPayload({
+        sessionId: "session-1",
+        startedAt: "2026-09-27T08:00:00-03:00",
+        expectedRevision: 1,
+        endedAt: "2026-09-27T18:00:00-03:00"
+      })
+    ).toEqual({
+      sessionId: "session-1",
+      expectedRevision: 1,
+      endedAt: "2026-09-27T18:00:00-03:00"
+    });
+  });
+
+  it("rejects a closure before the session start", () => {
+    expect(() =>
+      createEndWorkSessionPayload({
+        sessionId: "session-1",
+        startedAt: "2026-09-27T12:00:00-03:00",
+        expectedRevision: 1,
+        endedAt: "2026-09-27T08:00:00-03:00"
+      })
+    ).toThrow(/endedAt/);
   });
 
   it("closes with revision increment and rejects stale close", () => {
