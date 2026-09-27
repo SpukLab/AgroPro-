@@ -36,6 +36,7 @@ export interface TeamCompositionItem {
   validTo?: string;
   pendingEnd?: boolean;
   pendingStart?: boolean;
+  pendingLabelCorrection?: boolean;
 }
 
 export type AddTeamMemberInput =
@@ -224,7 +225,7 @@ export async function listTeamComposition(
   try {
     const { data: assignments, error: assignmentError } = await supabase
       .from("team_assignments")
-      .select("id, party_id, equipment_id, role, valid_from, valid_to")
+      .select("id, party_id, equipment_id, role, valid_from, valid_to, display_label_override")
       .eq("organization_id", organizationId)
       .eq("operational_team_id", operationalTeamId)
       .order("valid_from", { ascending: true });
@@ -276,7 +277,10 @@ export async function listTeamComposition(
           assignmentId: row.id as string,
           subjectKind: "person",
           subjectId: partyId,
-          displayName: partyNames.get(partyId) ?? "Persona",
+          displayName:
+            (row.display_label_override as string | null) ??
+            partyNames.get(partyId) ??
+            "Persona",
           role: row.role as string,
           validFrom: row.valid_from as string,
           validTo: (row.valid_to as string | null) ?? undefined
@@ -288,7 +292,10 @@ export async function listTeamComposition(
         assignmentId: row.id as string,
         subjectKind: "equipment",
         subjectId: equipmentId!,
-        displayName: equipmentData?.displayName ?? "Equipo",
+        displayName:
+          (row.display_label_override as string | null) ??
+          equipmentData?.displayName ??
+          "Equipo",
         equipmentType: equipmentData?.equipmentType,
         role: row.role as string,
         validFrom: row.valid_from as string,
@@ -511,4 +518,71 @@ export async function queueReplaceTeamMember(
     commandIds: [endCommandId, resourceCommandId, assignmentCommandId],
     replacement
   };
+}
+
+
+export interface CorrectTeamAssignmentLabelPayload {
+  assignmentId: string;
+  operationalTeamId: string;
+  displayLabel: string;
+}
+
+export async function queueCorrectTeamAssignmentLabel(input: {
+  actorId: string;
+  organizationId: string;
+  deviceId: string;
+  operationalTeamId: string;
+  assignmentId: string;
+  displayLabel: string;
+}): Promise<OfflineCommand<CorrectTeamAssignmentLabelPayload>> {
+  const displayLabel = input.displayLabel.trim();
+  if (!displayLabel) {
+    throw new Error("displayLabel is required");
+  }
+
+  const now = new Date().toISOString();
+  const payload: CorrectTeamAssignmentLabelPayload = {
+    assignmentId: input.assignmentId,
+    operationalTeamId: input.operationalTeamId,
+    displayLabel
+  };
+
+  const command: OfflineCommand<CorrectTeamAssignmentLabelPayload> = {
+    clientOperationId: crypto.randomUUID(),
+    commandType: "operations.correct_team_assignment_label",
+    actorId: input.actorId,
+    deviceId: input.deviceId,
+    tenantScope: input.organizationId,
+    targetRef: input.assignmentId,
+    payload,
+    occurredAtLocal: now,
+    queuedAtLocal: now,
+    conflictClass: "C",
+    dependencies: [],
+    evidenceRefs: [],
+    schemaVersion: 1
+  };
+
+  await enqueueCommand(command);
+
+  const key = `team-composition:${input.organizationId}:${input.operationalTeamId}`;
+  const cached = await getEntityCache<TeamCompositionItem[]>(key);
+  if (cached) {
+    await putEntityCache(
+      key,
+      "team-composition",
+      input.operationalTeamId,
+      cached.map((item) =>
+        item.assignmentId === input.assignmentId
+          ? {
+              ...item,
+              displayName: displayLabel,
+              pendingLabelCorrection: true
+            }
+          : item
+      )
+    );
+  }
+
+  return command;
 }
