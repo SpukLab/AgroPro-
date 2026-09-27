@@ -8,7 +8,7 @@ Registrar evidencia verificable del paso desde contrato/CI a backend real antes 
 
 **Backend live: validado.**  
 **Preview PWA: publicado.**  
-**E2E interactivo en dispositivo físico: en curso.**
+**E2E interactivo en dispositivo físico: validado.**
 
 Preview técnico:
 
@@ -125,15 +125,38 @@ Validado en dispositivos físicos:
 
 La cuenta de prueba que completó el acceso quedó asociada como `owner`. La recuperación de contraseña se incorporó a la aplicación; la entrega del correo de recovery mediante el mailer estándar de Supabase queda como asunto separado de infraestructura de correo y no bloquea el E2E funcional.
 
-## Pendiente real para cerrar Milestone A
+## E2E físico — cierre 2026-09-27
 
-La infraestructura ya no es el bloqueo. El recorrido físico continúa desde el punto 4:
+Validación final completada en iPhone:
 
-1. crear cosecha con conectividad disponible;
-2. repetir creación offline y comprobar outbox;
-3. reconectar y sincronizar;
-4. confirmar read model en PostgreSQL;
-5. instalar como PWA / añadir a inicio;
-6. recargar sin red y confirmar continuidad mínima.
+1. creación offline registrada localmente en IndexedDB;
+2. reconexión y sincronización completadas;
+3. resultado de Outbox: **1 aceptado · 0 duplicados · 0 conflictos · 0 fallos técnicos**;
+4. contador posterior: **0 comandos pendientes en este dispositivo**;
+5. operación visible posteriormente bajo **Autoridad remota / Operaciones confirmadas**;
+6. SURKARA instalada como PWA y abierta desde el icono de inicio;
+7. arranque completo en modo avión con estado **OFFLINE**;
+8. sesión autenticada y Organization `Stepanosky Hermanos` conservadas;
+9. contexto agronómico recuperado desde **CACHE LOCAL**: establecimiento `La cuka`, lote `Lote 2`, 180 ha, campaña `2026/27`;
+10. formulario de nueva operación disponible sin conectividad.
 
-No avanzar a Operational Team / WorkSession hasta registrar esta evidencia o un bloqueo específico de Safari/iOS.
+### Observación de dispositivo
+
+El identificador local visto en Safari difirió del identificador dentro de la PWA instalada. Debe tratarse como dos clientes locales distintos para efectos de outbox y trazabilidad de dispositivo.
+
+## Resultado Milestone A
+
+**CERRADO / PASS.**
+
+Quedaron demostrados en dispositivo físico:
+
+- backend Supabase real;
+- autenticación y aislamiento de organización;
+- persistencia local;
+- outbox offline;
+- sincronización hacia autoridad remota;
+- PWA instalable;
+- arranque sin red;
+- recuperación de contexto operativo desde cache local.
+
+El desarrollo puede continuar con **Operational Team / WorkSession** sin mantener Milestone A como bloqueo.
