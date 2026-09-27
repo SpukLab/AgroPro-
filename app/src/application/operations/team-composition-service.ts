@@ -33,6 +33,8 @@ export interface WorkSessionHistoryItem {
   teamId: string;
   teamName: string;
   agriculturalOperationId: string;
+  contractorJobStatus: "planned" | "ready" | "active" | "completed" | "cancelled";
+  contractorJobRevision: number;
   cropCode: string;
   fieldName: string;
   startedAt: string;
@@ -237,13 +239,13 @@ export async function listRecentWorkSessions(
   limit = 12
 ): Promise<WorkSessionHistoryItem[]> {
   if (!supabase) throw new Error("Supabase is not configured");
-  const key = `work-session-history:${organizationId}`;
+  const key = `work-session-history:v2:${organizationId}`;
 
   try {
     const { data, error } = await supabase
       .from("work_sessions")
       .select(
-        "id, started_at, ended_at, revision, contractor_job_id, operational_team_id, operational_teams!inner(name), contractor_jobs!inner(agricultural_operation_id, agricultural_operations!inner(crop_code, fields!inner(name)))"
+        "id, started_at, ended_at, revision, contractor_job_id, operational_team_id, operational_teams!inner(name), contractor_jobs!inner(status, revision, agricultural_operation_id, agricultural_operations!inner(crop_code, fields!inner(name)))"
       )
       .eq("organization_id", organizationId)
       .eq("status", "completed")
@@ -256,6 +258,8 @@ export async function listRecentWorkSessions(
     const history: WorkSessionHistoryItem[] = (data ?? []).map((row) => {
       const team = row.operational_teams as unknown as { name: string };
       const job = row.contractor_jobs as unknown as {
+        status: "planned" | "ready" | "active" | "completed" | "cancelled";
+        revision: number;
         agricultural_operation_id: string;
         agricultural_operations: { crop_code: string; fields: { name: string } };
       };
@@ -266,6 +270,8 @@ export async function listRecentWorkSessions(
         teamId: row.operational_team_id as string,
         teamName: team.name,
         agriculturalOperationId: job.agricultural_operation_id,
+        contractorJobStatus: job.status,
+        contractorJobRevision: Number(job.revision),
         cropCode: job.agricultural_operations.crop_code,
         fieldName: job.agricultural_operations.fields.name,
         startedAt: row.started_at as string,

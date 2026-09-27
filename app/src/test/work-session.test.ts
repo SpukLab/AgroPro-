@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   WorkSessionRevisionConflictError,
   closeWorkSession,
+  createCompleteContractorJobPayload,
   createContractorJob,
   createEndWorkSessionPayload,
   startWorkSession
@@ -25,6 +26,18 @@ describe("WorkSession", () => {
     expect(job.status).toBe("ready");
     expect(session.status).toBe("active");
     expect(session.operationalTeamId).toBe("team-1");
+  });
+
+  it("builds a revision-aware contractor job completion payload", () => {
+    expect(
+      createCompleteContractorJobPayload({
+        jobId: "job-1",
+        expectedRevision: 2
+      })
+    ).toEqual({
+      jobId: "job-1",
+      expectedRevision: 2
+    });
   });
 
   it("builds a revision-aware closure payload", () => {

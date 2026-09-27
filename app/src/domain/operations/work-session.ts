@@ -136,3 +136,27 @@ export function createEndWorkSessionPayload(input: {
     endedAt: input.endedAt
   };
 }
+
+
+export interface CompleteContractorJobPayload {
+  jobId: string;
+  expectedRevision: number;
+}
+
+export function createCompleteContractorJobPayload(input: {
+  jobId: string;
+  expectedRevision: number;
+}): CompleteContractorJobPayload {
+  if (!input.jobId.trim()) {
+    throw new Error("jobId is required");
+  }
+
+  if (!Number.isInteger(input.expectedRevision) || input.expectedRevision <= 0) {
+    throw new Error("expectedRevision must be a positive integer");
+  }
+
+  return {
+    jobId: input.jobId,
+    expectedRevision: input.expectedRevision
+  };
+}

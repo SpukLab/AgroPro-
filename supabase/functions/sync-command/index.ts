@@ -222,6 +222,25 @@ const userHandler = withSupabase({ auth: "user" }, async (req, ctx) => {
         break;
       }
 
+      case "contractor.complete_job": {
+        const jobId = stringField(payload, "jobId")!;
+        if (targetRef !== jobId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_complete_contractor_job";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_job_id: jobId,
+          p_expected_revision: numberField(payload, "expectedRevision"),
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
       case "operations.create_equipment": {
         const equipmentId = stringField(payload, "id")!;
         if (targetRef !== equipmentId) return targetMismatch(clientOperationId);
