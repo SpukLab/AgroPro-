@@ -44,3 +44,32 @@ Composición real del equipo operativo:
 - rotaciones posteriores sin perder historia.
 
 La UI de operador debe utilizar lenguaje operativo en español; los nombres técnicos internos pueden permanecer en código y documentación.
+
+
+## Team Composition + Auto Sync — cierre físico 2026-09-27
+
+Validación adicional realizada en iPhone con la PWA instalada:
+
+1. se agregaron recursos y operadores sin conectividad real;
+2. la cola llegó a **10 comandos pendientes**;
+3. al volver a abrir SURKARA con conectividad disponible, el Sync Engine drenó automáticamente la cola sin intervención manual;
+4. la autoridad remota confirmó los nuevos integrantes en el mismo Operational Team;
+5. la composición remota quedó formada por maquinaria y operadores con asignaciones temporales activas;
+6. el indicador de conectividad fue corregido para comprobar alcance real al Sync Gateway en lugar de depender sólo de `navigator.onLine`.
+
+### Integrantes confirmados remotamente tras la prueba
+
+- Cosechadora Vassalli — cosechadora;
+- Jhon deere — tractor;
+- Monotolva 1 — monotolva;
+- Monotolva xa — monotolva;
+- Juan Carlos — operador de cosechadora;
+- Bernardo — operador de cosechadora;
+- Victor — operador de tractor;
+- Jacobo — operador / apoyo.
+
+### Resultado
+
+**PASS.**
+
+Quedó validado en dispositivo físico el comportamiento esperado de **offline queue → reapertura con red → auto-sync → autoridad remota** para composición operativa.
