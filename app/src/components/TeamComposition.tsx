@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   listActiveExecutionContexts,
   listTeamComposition,
+  queueEndTeamAssignment,
   queueTeamMember,
   type ActiveExecutionContext,
   type TeamCompositionItem
@@ -95,6 +96,7 @@ export function TeamComposition({
   const [selectedSessionId, setSelectedSessionId] = useState("");
   const [composition, setComposition] = useState<TeamCompositionItem[]>([]);
   const [busy, setBusy] = useState(false);
+  const [endingAssignmentId, setEndingAssignmentId] = useState<string>();
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string>();
   const [preset, setPreset] = useState<ResourcePreset>("harvester");
@@ -150,6 +152,43 @@ export function TeamComposition({
       setComposition([]);
     }
   }, [selected?.teamId, syncVersion]);
+
+  async function handleEndAssignment(item: TeamCompositionItem) {
+    if (!selected || item.validTo || endingAssignmentId) return;
+
+    const validTo = new Date().toISOString();
+    setEndingAssignmentId(item.assignmentId);
+    setMessage(undefined);
+
+    try {
+      await queueEndTeamAssignment({
+        actorId,
+        organizationId,
+        deviceId,
+        operationalTeamId: selected.teamId,
+        assignmentId: item.assignmentId,
+        validFrom: item.validFrom,
+        validTo,
+        reason: "Finalizado desde composición operativa"
+      });
+
+      setComposition((current) =>
+        current.map((candidate) =>
+          candidate.assignmentId === item.assignmentId
+            ? { ...candidate, validTo, pendingEnd: true }
+            : candidate
+        )
+      );
+      await onPendingChanged();
+      setMessage(
+        `${item.displayName} quedó marcado para finalizar. Se aplicará al sincronizar.`
+      );
+    } catch (error) {
+      setMessage(messageOf(error));
+    } finally {
+      setEndingAssignmentId(undefined);
+    }
+  }
 
   async function handleAddMember(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -242,13 +281,35 @@ export function TeamComposition({
             ) : (
               composition.map((item) => (
                 <article className="composition-row" key={item.assignmentId}>
-                  <div>
+                  <div className="composition-main">
                     <strong>{item.displayName}</strong>
                     <span>{roleLabels[item.role] ?? item.role}</span>
                   </div>
-                  <span className={item.validTo ? "assignment-ended" : "assignment-active"}>
-                    {item.validTo ? "FINALIZADO" : "ACTIVO"}
-                  </span>
+                  <div className="composition-actions">
+                    <span
+                      className={
+                        item.pendingEnd
+                          ? "assignment-pending"
+                          : item.validTo
+                            ? "assignment-ended"
+                            : "assignment-active"
+                      }
+                    >
+                      {item.pendingEnd ? "PENDIENTE" : item.validTo ? "FINALIZADO" : "ACTIVO"}
+                    </span>
+                    {!item.validTo && (
+                      <button
+                        className="assignment-end"
+                        type="button"
+                        disabled={Boolean(endingAssignmentId)}
+                        onClick={() => void handleEndAssignment(item)}
+                      >
+                        {endingAssignmentId === item.assignmentId
+                          ? "Marcando…"
+                          : "Finalizar"}
+                      </button>
+                    )}
+                  </div>
                 </article>
               ))
             )}

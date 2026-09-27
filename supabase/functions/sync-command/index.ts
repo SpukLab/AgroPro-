@@ -272,6 +272,27 @@ const userHandler = withSupabase({ auth: "user" }, async (req, ctx) => {
         break;
       }
 
+      case "operations.end_team_assignment": {
+        const assignmentId = stringField(payload, "assignmentId")!;
+        if (targetRef !== assignmentId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_end_team_assignment";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_assignment_id: assignmentId,
+          p_operational_team_id: stringField(payload, "operationalTeamId")!,
+          p_valid_to: stringField(payload, "validTo")!,
+          p_reason: stringField(payload, "reason", { optional: true }) ?? null,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
       default:
         return json(
           {

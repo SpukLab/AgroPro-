@@ -121,3 +121,33 @@ export function createTeamMemberAssignment(input: {
     reason: optional(input.reason)
   };
 }
+
+
+export interface EndTeamAssignmentPayload {
+  assignmentId: string;
+  operationalTeamId: string;
+  validTo: string;
+  reason?: string;
+}
+
+export function createEndTeamAssignmentPayload(input: {
+  assignmentId: string;
+  operationalTeamId: string;
+  validFrom: string;
+  validTo: string;
+  reason?: string;
+}): EndTeamAssignmentPayload {
+  const from = new Date(input.validFrom).getTime();
+  const to = new Date(input.validTo).getTime();
+
+  if (!Number.isFinite(from) || !Number.isFinite(to) || to < from) {
+    throw new Error("validTo must not be before validFrom");
+  }
+
+  return {
+    assignmentId: required(input.assignmentId, "assignmentId"),
+    operationalTeamId: required(input.operationalTeamId, "operationalTeamId"),
+    validTo: input.validTo,
+    reason: optional(input.reason)
+  };
+}

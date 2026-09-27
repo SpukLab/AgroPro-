@@ -96,3 +96,4 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/tests/milestone_a_contract.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/operational_execution_contract.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/team_composition_contract.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/team_assignment_lifecycle_contract.sql

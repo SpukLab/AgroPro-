@@ -30,7 +30,8 @@ begin
          'process_start_work_session',
          'process_create_equipment',
          'process_create_team_person',
-         'process_assign_team_member'
+         'process_assign_team_member',
+         'process_end_team_assignment'
        )
        and p.prosrc like '%public.digest(%'
   ) then
