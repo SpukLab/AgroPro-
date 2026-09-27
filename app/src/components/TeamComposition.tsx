@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   listActiveExecutionContexts,
   listTeamComposition,
+  queueCorrectTeamAssignmentLabel,
   queueEndTeamAssignment,
   queueReplaceTeamMember,
   queueTeamMember,
@@ -104,6 +105,9 @@ export function TeamComposition({
   const [replacementName, setReplacementName] = useState("");
   const [replacementAt, setReplacementAt] = useState(localDateTimeInput(new Date()));
   const [rotationBusy, setRotationBusy] = useState(false);
+  const [correctionTarget, setCorrectionTarget] = useState<TeamCompositionItem>();
+  const [correctedName, setCorrectedName] = useState("");
+  const [correctionBusy, setCorrectionBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string>();
   const [preset, setPreset] = useState<ResourcePreset>("harvester");
@@ -249,6 +253,62 @@ export function TeamComposition({
     }
   }
 
+  async function handleCorrectLabel(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selected || !correctionTarget) return;
+
+    const nextName = correctedName.trim();
+    if (!nextName) {
+      setMessage("Ingresá el nombre corregido.");
+      return;
+    }
+
+    if (nextName === correctionTarget.displayName.trim()) {
+      setCorrectionTarget(undefined);
+      setCorrectedName("");
+      return;
+    }
+
+    setCorrectionBusy(true);
+    setMessage(undefined);
+
+    try {
+      await queueCorrectTeamAssignmentLabel({
+        actorId,
+        organizationId,
+        deviceId,
+        operationalTeamId: selected.teamId,
+        assignmentId: correctionTarget.assignmentId,
+        displayLabel: nextName
+      });
+
+      setComposition((current) =>
+        current.map((item) =>
+          item.assignmentId === correctionTarget.assignmentId
+            ? {
+                ...item,
+                displayName: nextName,
+                pendingLabelCorrection: true
+              }
+            : item
+        )
+      );
+
+      await onPendingChanged();
+      setMessage(
+        online
+          ? `Corrección preparada: "${correctionTarget.displayName}" → "${nextName}". Se enviará a la autoridad remota.`
+          : `Corrección guardada offline: "${correctionTarget.displayName}" → "${nextName}". Se sincronizará al recuperar conexión.`
+      );
+      setCorrectionTarget(undefined);
+      setCorrectedName("");
+    } catch (error) {
+      setMessage(messageOf(error));
+    } finally {
+      setCorrectionBusy(false);
+    }
+  }
+
   async function handleAddMember(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selected) return;
@@ -349,7 +409,9 @@ export function TeamComposition({
                   <div className="composition-actions">
                     <span
                       className={
-                        item.pendingStart || item.pendingEnd
+                        item.pendingStart ||
+                        item.pendingEnd ||
+                        item.pendingLabelCorrection
                           ? "assignment-pending"
                           : item.validTo
                             ? "assignment-ended"
@@ -360,20 +422,42 @@ export function TeamComposition({
                         ? "ALTA PENDIENTE"
                         : item.pendingEnd
                           ? "BAJA PENDIENTE"
-                          : item.validTo
-                            ? "FINALIZADO"
-                            : "ACTIVO"}
+                          : item.pendingLabelCorrection
+                            ? "CORRECCIÓN PENDIENTE"
+                            : item.validTo
+                              ? "FINALIZADO"
+                              : "ACTIVO"}
                     </span>
+                    {!item.pendingStart && (
+                      <button
+                        className="assignment-correct"
+                        type="button"
+                        disabled={correctionBusy || rotationBusy || Boolean(endingAssignmentId)}
+                        onClick={() => {
+                          setCorrectionTarget(item);
+                          setCorrectedName(item.displayName);
+                          setRotationTarget(undefined);
+                          setMessage(undefined);
+                        }}
+                      >
+                        Corregir nombre
+                      </button>
+                    )}
                     {!item.validTo && !item.pendingStart && (
                       <>
                         <button
                           className="assignment-replace"
                           type="button"
-                          disabled={Boolean(endingAssignmentId) || rotationBusy}
+                          disabled={
+                            Boolean(endingAssignmentId) ||
+                            rotationBusy ||
+                            correctionBusy
+                          }
                           onClick={() => {
                             setRotationTarget(item);
                             setReplacementName("");
                             setReplacementAt(localDateTimeInput(new Date()));
+                            setCorrectionTarget(undefined);
                             setMessage(undefined);
                           }}
                         >
@@ -382,7 +466,11 @@ export function TeamComposition({
                         <button
                           className="assignment-end"
                           type="button"
-                          disabled={Boolean(endingAssignmentId) || rotationBusy}
+                          disabled={
+                            Boolean(endingAssignmentId) ||
+                            rotationBusy ||
+                            correctionBusy
+                          }
                           onClick={() => void handleEndAssignment(item)}
                         >
                           {endingAssignmentId === item.assignmentId
@@ -396,6 +484,51 @@ export function TeamComposition({
               ))
             )}
           </div>
+
+          {correctionTarget && (
+            <form
+              className="form-stack correction-form"
+              onSubmit={(event) => void handleCorrectLabel(event)}
+            >
+              <div className="rotation-heading">
+                <strong>Corregir nombre visible</strong>
+                <span>
+                  Corrige esta asignación de la jornada sin reemplazar el recurso ni alterar sus horarios.
+                </span>
+              </div>
+
+              <label>
+                Nombre corregido
+                <input
+                  value={correctedName}
+                  onChange={(event) => setCorrectedName(event.target.value)}
+                  maxLength={120}
+                  required
+                />
+              </label>
+
+              <div className="rotation-buttons">
+                <button
+                  className="rotation-cancel"
+                  type="button"
+                  disabled={correctionBusy}
+                  onClick={() => {
+                    setCorrectionTarget(undefined);
+                    setCorrectedName("");
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button disabled={correctionBusy} type="submit">
+                  {correctionBusy
+                    ? "Guardando…"
+                    : online
+                      ? "Guardar corrección"
+                      : "Guardar corrección offline"}
+                </button>
+              </div>
+            </form>
+          )}
 
           {rotationTarget && (
             <form

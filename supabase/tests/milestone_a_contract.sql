@@ -31,7 +31,8 @@ begin
          'process_create_equipment',
          'process_create_team_person',
          'process_assign_team_member',
-         'process_end_team_assignment'
+         'process_end_team_assignment',
+         'process_correct_team_assignment_label'
        )
        and p.prosrc like '%public.digest(%'
   ) then
