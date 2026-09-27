@@ -246,19 +246,28 @@ export function TeamComposition({
           </div>
 
           <form className="form-stack member-form" onSubmit={(event) => void handleAddMember(event)}>
-            <label>
-              Recurso
-              <select
-                value={preset}
-                onChange={(event) => setPreset(event.target.value as ResourcePreset)}
-              >
-                {Object.entries(presetLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <fieldset className="resource-fieldset">
+              <legend>Recurso</legend>
+              <div className="resource-picker" role="group" aria-label="Tipo de recurso">
+                {(Object.entries(presetLabels) as [ResourcePreset, string][]).map(
+                  ([value, label]) => (
+                    <button
+                      key={value}
+                      className={
+                        preset === value
+                          ? "resource-option active"
+                          : "resource-option"
+                      }
+                      type="button"
+                      aria-pressed={preset === value}
+                      onClick={() => setPreset(value)}
+                    >
+                      {label}
+                    </button>
+                  )
+                )}
+              </div>
+            </fieldset>
 
             <label>
               Nombre / identificación

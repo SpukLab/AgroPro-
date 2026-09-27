@@ -222,7 +222,7 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(143, 209, 79, 0.08);
 }
 
-button:not(.segment) {
+button:not(.segment):not(.resource-option) {
   width: 100%;
   border: 0;
   border-radius: 14px;
@@ -521,4 +521,50 @@ button:disabled {
 
 .empty-note {
   margin-bottom: 0;
+}
+
+
+.resource-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.resource-fieldset legend {
+  margin-bottom: 8px;
+  color: #b9c4be;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.resource-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.resource-option {
+  min-height: 48px;
+  border: 1px solid #2b3832;
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: #b9c4be;
+  background: #0a100d;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+}
+
+.resource-option.active {
+  border-color: #8fd14f;
+  color: #081006;
+  background: #8fd14f;
+}
+
+.resource-option:focus-visible {
+  outline: 3px solid rgba(143, 209, 79, 0.18);
+  outline-offset: 2px;
 }
