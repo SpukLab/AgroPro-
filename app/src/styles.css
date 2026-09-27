@@ -715,3 +715,56 @@ button:disabled {
   border-radius: 16px;
   background: #120f0a;
 }
+
+
+.composition-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 2px 4px;
+}
+
+.composition-section-heading strong {
+  font-size: 13px;
+  color: #c5d0ca;
+}
+
+.composition-section-heading span,
+.composition-history summary span {
+  min-width: 28px;
+  border: 1px solid #2b3832;
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: #94a29b;
+  font-size: 11px;
+  font-weight: 750;
+  text-align: center;
+}
+
+.composition-history {
+  margin: 4px 0 18px;
+  border-top: 1px solid #202b26;
+  padding-top: 12px;
+}
+
+.composition-history summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 2px;
+  color: #aeb9b3;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+  list-style: none;
+}
+
+.composition-history summary::-webkit-details-marker {
+  display: none;
+}
+
+.history-list {
+  margin-top: 8px;
+}
