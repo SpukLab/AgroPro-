@@ -223,7 +223,7 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(143, 209, 79, 0.08);
 }
 
-button:not(.segment):not(.resource-option):not(.assignment-end):not(.assignment-replace):not(.assignment-correct):not(.rotation-cancel):not(.rotation-correct-trigger):not(.session-close-trigger) {
+button:not(.segment):not(.resource-option):not(.assignment-end):not(.assignment-replace):not(.assignment-correct):not(.rotation-cancel):not(.rotation-correct-trigger):not(.session-close-trigger):not(.resume-session-trigger):not(.job-complete-trigger) {
   width: 100%;
   border: 0;
   border-radius: 14px;
@@ -965,4 +965,37 @@ button:disabled {
 
 .resume-session-form {
   padding-top: 2px;
+}
+
+
+.job-lifecycle-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.job-complete-trigger {
+  width: 100%;
+  border: 1px solid #4a4132;
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #f4d3a2;
+  background: #15110b;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.job-complete-trigger:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.job-complete-form {
+  padding-top: 2px;
+}
+
+@media (max-width: 420px) {
+  .job-lifecycle-actions {
+    grid-template-columns: 1fr;
+  }
 }
