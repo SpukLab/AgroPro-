@@ -222,7 +222,7 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(143, 209, 79, 0.08);
 }
 
-button:not(.segment):not(.resource-option) {
+button:not(.segment):not(.resource-option):not(.assignment-end) {
   width: 100%;
   border: 0;
   border-radius: 14px;
@@ -584,4 +584,40 @@ button:disabled {
   color: #94a29b;
   font-size: 12px;
   line-height: 1.45;
+}
+
+
+.composition-main {
+  min-width: 0;
+}
+
+.composition-actions {
+  display: grid;
+  justify-items: end;
+  gap: 7px;
+  flex: 0 0 auto;
+}
+
+.assignment-pending {
+  color: #f4ae51;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.assignment-end {
+  width: auto;
+  border: 1px solid #34453c;
+  border-radius: 10px;
+  padding: 7px 10px;
+  color: #c5d0ca;
+  background: #151e19;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.assignment-end:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
 }
