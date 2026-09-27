@@ -17,6 +17,7 @@ import { supabase } from "../../infra/supabase/client";
 
 export interface ActiveExecutionContext {
   sessionId: string;
+  contractorJobId: string;
   teamId: string;
   teamName: string;
   agriculturalOperationId: string;
@@ -28,6 +29,7 @@ export interface ActiveExecutionContext {
 
 export interface WorkSessionHistoryItem {
   sessionId: string;
+  contractorJobId: string;
   teamId: string;
   teamName: string;
   agriculturalOperationId: string;
@@ -193,7 +195,7 @@ export async function listActiveExecutionContexts(
     const { data, error } = await supabase
       .from("work_sessions")
       .select(
-        "id, started_at, revision, operational_team_id, operational_teams!inner(name), contractor_jobs!inner(agricultural_operation_id, agricultural_operations!inner(crop_code, fields!inner(name)))"
+        "id, started_at, revision, contractor_job_id, operational_team_id, operational_teams!inner(name), contractor_jobs!inner(agricultural_operation_id, agricultural_operations!inner(crop_code, fields!inner(name)))"
       )
       .eq("organization_id", organizationId)
       .eq("status", "active")
@@ -210,6 +212,7 @@ export async function listActiveExecutionContexts(
 
       return {
         sessionId: row.id as string,
+        contractorJobId: row.contractor_job_id as string,
         teamId: row.operational_team_id as string,
         teamName: team.name,
         agriculturalOperationId: job.agricultural_operation_id,
@@ -240,7 +243,7 @@ export async function listRecentWorkSessions(
     const { data, error } = await supabase
       .from("work_sessions")
       .select(
-        "id, started_at, ended_at, revision, operational_team_id, operational_teams!inner(name), contractor_jobs!inner(agricultural_operation_id, agricultural_operations!inner(crop_code, fields!inner(name)))"
+        "id, started_at, ended_at, revision, contractor_job_id, operational_team_id, operational_teams!inner(name), contractor_jobs!inner(agricultural_operation_id, agricultural_operations!inner(crop_code, fields!inner(name)))"
       )
       .eq("organization_id", organizationId)
       .eq("status", "completed")
@@ -259,6 +262,7 @@ export async function listRecentWorkSessions(
 
       return {
         sessionId: row.id as string,
+        contractorJobId: row.contractor_job_id as string,
         teamId: row.operational_team_id as string,
         teamName: team.name,
         agriculturalOperationId: job.agricultural_operation_id,
