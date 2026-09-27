@@ -130,6 +130,7 @@ export function TeamComposition({
   }, [organizationId]);
 
   useEffect(() => {
+    setMessage(undefined);
     void refreshContexts();
   }, [syncVersion]);
 
