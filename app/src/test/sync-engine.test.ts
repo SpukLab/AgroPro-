@@ -123,6 +123,31 @@ describe("sync engine", () => {
     expect(child?.status).toBe("blocked_dependency");
   });
 
+  it("drains a dependency chain in one sync cycle", async () => {
+    await enqueueCommand(command("team"));
+    await enqueueCommand(command("job", ["team"]));
+    await enqueueCommand(command("session", ["job"]));
+
+    const sent: string[] = [];
+    const transport: SyncTransport = {
+      async send(input) {
+        sent.push(input.clientOperationId);
+        return {
+          clientOperationId: input.clientOperationId,
+          status: "accepted",
+          processedAt: "2026-09-27T16:00:00Z"
+        };
+      }
+    };
+
+    const result = await syncReadyCommands(transport);
+
+    expect(sent).toEqual(["team", "job", "session"]);
+    expect(result.attempted).toBe(3);
+    expect(result.accepted).toBe(3);
+    expect((await surkaraDb.outbox.get("session"))?.status).toBe("accepted");
+  });
+
   it("recovers commands left syncing after an interrupted app session", async () => {
     await enqueueCommand(command("cmd-interrupted"));
     await markCommandSyncing("cmd-interrupted");
