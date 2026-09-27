@@ -24,7 +24,10 @@ begin
        and p.proname in (
          'process_bootstrap_organization',
          'process_create_harvest_operation',
-         'process_setup_agronomy_context'
+         'process_setup_agronomy_context',
+         'process_create_operational_team',
+         'process_create_contractor_job',
+         'process_start_work_session'
        )
        and p.prosrc like '%public.digest(%'
   ) then

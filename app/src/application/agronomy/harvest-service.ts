@@ -1,6 +1,7 @@
 import { createHarvestOperation } from "../../domain/operations/agricultural-operation";
 import type { OfflineCommand } from "../../domain/sync/types";
 import { enqueueCommand } from "../../infra/local/outbox";
+import { getEntityCache, putEntityCache } from "../../infra/local/cache";
 import { supabase } from "../../infra/supabase/client";
 
 export interface QueueHarvestInput {
@@ -63,25 +64,42 @@ export async function listHarvestOperations(
 ): Promise<HarvestOperationReadModel[]> {
   if (!supabase) throw new Error("Supabase is not configured");
 
-  const { data, error } = await supabase
-    .from("agricultural_operations")
-    .select(
-      "id, crop_code, planned_area_ha, status, revision, fields!inner(name), campaigns!inner(name)"
-    )
-    .eq("organization_id", organizationId)
-    .eq("operation_type", "harvest")
-    .order("created_at", { ascending: false })
-    .limit(20);
+  const cacheKey = `harvest-operations:${organizationId}`;
 
-  if (error) throw error;
+  try {
+    const { data, error } = await supabase
+      .from("agricultural_operations")
+      .select(
+        "id, crop_code, planned_area_ha, status, revision, fields!inner(name), campaigns!inner(name)"
+      )
+      .eq("organization_id", organizationId)
+      .eq("operation_type", "harvest")
+      .order("created_at", { ascending: false })
+      .limit(20);
 
-  return (data ?? []).map((row) => ({
-    id: row.id as string,
-    fieldName: (row.fields as unknown as { name: string }).name,
-    campaignName: (row.campaigns as unknown as { name: string }).name,
-    cropCode: row.crop_code as string,
-    plannedAreaHa: Number(row.planned_area_ha),
-    status: row.status as string,
-    revision: Number(row.revision)
-  }));
+    if (error) throw error;
+
+    const operations = (data ?? []).map((row) => ({
+      id: row.id as string,
+      fieldName: (row.fields as unknown as { name: string }).name,
+      campaignName: (row.campaigns as unknown as { name: string }).name,
+      cropCode: row.crop_code as string,
+      plannedAreaHa: Number(row.planned_area_ha),
+      status: row.status as string,
+      revision: Number(row.revision)
+    }));
+
+    await putEntityCache(
+      cacheKey,
+      "harvest-operations",
+      organizationId,
+      operations
+    );
+
+    return operations;
+  } catch (error) {
+    const cached = await getEntityCache<HarvestOperationReadModel[]>(cacheKey);
+    if (cached) return cached;
+    throw error;
+  }
 }

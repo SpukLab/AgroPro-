@@ -12,6 +12,7 @@ import {
   queueHarvestOperation,
   type HarvestOperationReadModel
 } from "../application/agronomy/harvest-service";
+import { queueExecutionStart } from "../application/operations/execution-service";
 
 interface AgronomyWorkspaceProps {
   organizationId: string;
@@ -55,6 +56,8 @@ export function AgronomyWorkspace({
   const [operations, setOperations] = useState<HarvestOperationReadModel[]>([]);
   const [operationBusy, setOperationBusy] = useState(false);
   const [operationMessage, setOperationMessage] = useState<string>();
+  const [executionBusy, setExecutionBusy] = useState(false);
+  const [executionMessage, setExecutionMessage] = useState<string>();
   const [establishmentName, setEstablishmentName] = useState("");
   const [fieldName, setFieldName] = useState("");
   const [area, setArea] = useState("");
@@ -205,6 +208,43 @@ export function AgronomyWorkspace({
       setOperationMessage(messageOf(error));
     } finally {
       setOperationBusy(false);
+    }
+  }
+
+  async function handleExecutionStart(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const form = new FormData(event.currentTarget);
+    const agriculturalOperationId = String(form.get("agriculturalOperationId") ?? "");
+    const teamName = String(form.get("teamName") ?? "").trim();
+    const startedAtRaw = String(form.get("startedAt") ?? "");
+
+    if (!agriculturalOperationId || !teamName || !startedAtRaw) {
+      setExecutionMessage("Completá operación, equipo e inicio de jornada.");
+      return;
+    }
+
+    setExecutionBusy(true);
+    setExecutionMessage(undefined);
+
+    try {
+      const queued = await queueExecutionStart({
+        actorId,
+        organizationId,
+        deviceId,
+        agriculturalOperationId,
+        teamName,
+        startedAt: new Date(startedAtRaw).toISOString()
+      });
+
+      await onPendingChanged();
+      setExecutionMessage(
+        `Jornada ${queued.session.id.slice(0, 8)}… preparada localmente. Se encadenaron equipo, trabajo y sesión para sincronizar en orden.`
+      );
+    } catch (error) {
+      setExecutionMessage(messageOf(error));
+    } finally {
+      setExecutionBusy(false);
     }
   }
 
@@ -417,6 +457,63 @@ export function AgronomyWorkspace({
             ))}
           </div>
         )}
+      </section>
+
+      <section className="card">
+        <span className="step">EJECUCIÓN OPERATIVA</span>
+        <h2>Nueva jornada</h2>
+        <p>
+          Prepara un Operational Team, el trabajo contratista y una WorkSession como
+          comandos offline encadenados. La composición detallada del equipo se agrega
+          como el siguiente incremento.
+        </p>
+
+        {operations.length === 0 ? (
+          <p>Primero necesitás una operación de cosecha confirmada o disponible en cache.</p>
+        ) : (
+          <form
+            className="form-stack"
+            onSubmit={(event) => void handleExecutionStart(event)}
+          >
+            <label>
+              Operación
+              <select name="agriculturalOperationId" defaultValue={operations[0].id}>
+                {operations.map((operation) => (
+                  <option key={operation.id} value={operation.id}>
+                    {operation.cropCode} · {operation.fieldName} · {operation.plannedAreaHa} ha
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Equipo operacional
+              <input
+                name="teamName"
+                defaultValue="Equipo Cosecha A"
+                minLength={2}
+                maxLength={120}
+                required
+              />
+            </label>
+
+            <label>
+              Inicio de jornada
+              <input
+                name="startedAt"
+                type="datetime-local"
+                defaultValue={localDateTimeInput(now)}
+                required
+              />
+            </label>
+
+            <button disabled={executionBusy} type="submit">
+              {executionBusy ? "Preparando…" : "Preparar jornada offline"}
+            </button>
+          </form>
+        )}
+
+        {executionMessage && <p className="message">{executionMessage}</p>}
       </section>
     </>
   );
