@@ -26,6 +26,18 @@ export interface ActiveExecutionContext {
   revision: number;
 }
 
+export interface WorkSessionHistoryItem {
+  sessionId: string;
+  teamId: string;
+  teamName: string;
+  agriculturalOperationId: string;
+  cropCode: string;
+  fieldName: string;
+  startedAt: string;
+  endedAt: string;
+  revision: number;
+}
+
 export interface TeamCompositionItem {
   assignmentId: string;
   subjectKind: "person" | "equipment";
@@ -212,6 +224,56 @@ export async function listActiveExecutionContexts(
     return contexts;
   } catch (error) {
     const cached = await getEntityCache<ActiveExecutionContext[]>(key);
+    if (cached) return cached;
+    throw error;
+  }
+}
+
+export async function listRecentWorkSessions(
+  organizationId: string,
+  limit = 12
+): Promise<WorkSessionHistoryItem[]> {
+  if (!supabase) throw new Error("Supabase is not configured");
+  const key = `work-session-history:${organizationId}`;
+
+  try {
+    const { data, error } = await supabase
+      .from("work_sessions")
+      .select(
+        "id, started_at, ended_at, revision, operational_team_id, operational_teams!inner(name), contractor_jobs!inner(agricultural_operation_id, agricultural_operations!inner(crop_code, fields!inner(name)))"
+      )
+      .eq("organization_id", organizationId)
+      .eq("status", "completed")
+      .not("ended_at", "is", null)
+      .order("ended_at", { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    const history: WorkSessionHistoryItem[] = (data ?? []).map((row) => {
+      const team = row.operational_teams as unknown as { name: string };
+      const job = row.contractor_jobs as unknown as {
+        agricultural_operation_id: string;
+        agricultural_operations: { crop_code: string; fields: { name: string } };
+      };
+
+      return {
+        sessionId: row.id as string,
+        teamId: row.operational_team_id as string,
+        teamName: team.name,
+        agriculturalOperationId: job.agricultural_operation_id,
+        cropCode: job.agricultural_operations.crop_code,
+        fieldName: job.agricultural_operations.fields.name,
+        startedAt: row.started_at as string,
+        endedAt: row.ended_at as string,
+        revision: Number(row.revision)
+      };
+    });
+
+    await putEntityCache(key, "work-session-history", organizationId, history);
+    return history;
+  } catch (error) {
+    const cached = await getEntityCache<WorkSessionHistoryItem[]>(key);
     if (cached) return cached;
     throw error;
   }
