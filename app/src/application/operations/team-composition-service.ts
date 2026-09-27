@@ -1,9 +1,11 @@
 import type { OfflineCommand } from "../../domain/sync/types";
 import {
+  createEndTeamAssignmentPayload,
   createEquipmentResource,
   createTeamMemberAssignment,
   createTeamPerson,
   type EquipmentResource,
+  type EndTeamAssignmentPayload,
   type EquipmentType,
   type TeamMemberAssignment,
   type TeamMemberRole,
@@ -32,6 +34,7 @@ export interface TeamCompositionItem {
   equipmentType?: string;
   validFrom: string;
   validTo?: string;
+  pendingEnd?: boolean;
 }
 
 export type AddTeamMemberInput =
@@ -295,4 +298,60 @@ export async function listTeamComposition(
     if (cached) return cached;
     throw error;
   }
+}
+
+
+export async function queueEndTeamAssignment(input: {
+  actorId: string;
+  organizationId: string;
+  deviceId: string;
+  operationalTeamId: string;
+  assignmentId: string;
+  validFrom: string;
+  validTo: string;
+  reason?: string;
+}): Promise<OfflineCommand<EndTeamAssignmentPayload>> {
+  const payload = createEndTeamAssignmentPayload({
+    assignmentId: input.assignmentId,
+    operationalTeamId: input.operationalTeamId,
+    validFrom: input.validFrom,
+    validTo: input.validTo,
+    reason: input.reason
+  });
+
+  const now = new Date().toISOString();
+  const command: OfflineCommand<EndTeamAssignmentPayload> = {
+    clientOperationId: crypto.randomUUID(),
+    commandType: "operations.end_team_assignment",
+    actorId: input.actorId,
+    deviceId: input.deviceId,
+    tenantScope: input.organizationId,
+    targetRef: input.assignmentId,
+    payload,
+    occurredAtLocal: now,
+    queuedAtLocal: now,
+    conflictClass: "C",
+    dependencies: [],
+    evidenceRefs: [],
+    schemaVersion: 1
+  };
+
+  await enqueueCommand(command);
+
+  const key = `team-composition:${input.organizationId}:${input.operationalTeamId}`;
+  const cached = await getEntityCache<TeamCompositionItem[]>(key);
+  if (cached) {
+    await putEntityCache(
+      key,
+      "team-composition",
+      input.operationalTeamId,
+      cached.map((item) =>
+        item.assignmentId === input.assignmentId
+          ? { ...item, validTo: input.validTo, pendingEnd: true }
+          : item
+      )
+    );
+  }
+
+  return command;
 }
