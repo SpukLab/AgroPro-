@@ -1,6 +1,7 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  queueCorrectTeamAssignmentLabel,
   queueEndTeamAssignment,
   queueReplaceTeamMember,
   queueTeamMember
@@ -97,6 +98,30 @@ describe("queueTeamMember", () => {
       displayName: "Operador tarde",
       role: "harvester_operator",
       pendingStart: true
+    });
+  });
+
+  it("queues assignment-local label correction as a single offline command", async () => {
+    const command = await queueCorrectTeamAssignmentLabel({
+      actorId: "actor-1",
+      organizationId: "org-1",
+      deviceId: "device-1",
+      operationalTeamId: "team-1",
+      assignmentId: "assignment-1",
+      displayLabel: "Víctor turno tarde"
+    });
+
+    const stored = await surkaraDb.outbox.get(command.clientOperationId);
+
+    expect(stored?.commandType).toBe(
+      "operations.correct_team_assignment_label"
+    );
+    expect(stored?.targetRef).toBe("assignment-1");
+    expect(stored?.dependencies).toEqual([]);
+    expect(stored?.payload).toMatchObject({
+      assignmentId: "assignment-1",
+      operationalTeamId: "team-1",
+      displayLabel: "Víctor turno tarde"
     });
   });
 
