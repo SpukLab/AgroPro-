@@ -3,9 +3,11 @@ import {
   type OperationalTeam
 } from "../../domain/operations/operational-team";
 import {
+  createCompleteContractorJobPayload,
   createContractorJob,
   createEndWorkSessionPayload,
   startWorkSession,
+  type CompleteContractorJobPayload,
   type ContractorJob,
   type EndWorkSessionPayload,
   type WorkSession
@@ -163,6 +165,34 @@ export async function queueExistingWorkSessionStart(input: {
     commandType: "contractor.start_work_session",
     targetRef: session.id,
     payload: session,
+    dependencies: []
+  };
+
+  await enqueueCommand(command);
+  return command;
+}
+
+
+export async function queueCompleteContractorJob(input: {
+  actorId: string;
+  organizationId: string;
+  deviceId: string;
+  jobId: string;
+  expectedRevision: number;
+}): Promise<OfflineCommand<CompleteContractorJobPayload>> {
+  const payload = createCompleteContractorJobPayload({
+    jobId: input.jobId,
+    expectedRevision: input.expectedRevision
+  });
+
+  const common = baseCommand(input);
+  const command: OfflineCommand<CompleteContractorJobPayload> = {
+    ...common,
+    clientOperationId: crypto.randomUUID(),
+    commandType: "contractor.complete_job",
+    targetRef: input.jobId,
+    baseRevision: input.expectedRevision,
+    payload,
     dependencies: []
   };
 
