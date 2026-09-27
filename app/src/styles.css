@@ -831,3 +831,94 @@ button:disabled {
   opacity: 0.48;
   cursor: not-allowed;
 }
+
+
+.session-history {
+  margin-top: 18px;
+  border-top: 1px solid #202b26;
+  padding-top: 14px;
+}
+
+.session-history summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 2px;
+  color: #c5d0ca;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+}
+
+.session-history summary::-webkit-details-marker {
+  display: none;
+}
+
+.session-history summary span {
+  min-width: 28px;
+  border: 1px solid #2b3832;
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: #94a29b;
+  font-size: 11px;
+  text-align: center;
+}
+
+.session-history-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.session-history-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 13px;
+  border: 1px solid #202b26;
+  border-radius: 14px;
+  background: #0a100d;
+}
+
+.session-history-row strong,
+.session-history-row span,
+.session-history-row b {
+  display: block;
+}
+
+.session-history-row strong {
+  margin-bottom: 3px;
+}
+
+.session-history-row span {
+  color: #94a29b;
+  font-size: 11px;
+}
+
+.session-history-meta {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  text-align: right;
+}
+
+.session-history-meta b {
+  color: #d4ddd8;
+  font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  .session-history-row {
+    grid-template-columns: 1fr;
+  }
+
+  .session-history-meta {
+    grid-template-columns: repeat(3, auto);
+    justify-content: space-between;
+    justify-items: start;
+    text-align: left;
+  }
+}
