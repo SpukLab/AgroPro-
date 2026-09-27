@@ -2,8 +2,8 @@
 
 > **Naming:** SURKARA es el nombre de producto de trabajo. El repositorio conserva temporalmente el nombre técnico heredado `SpukLab/AgroPro-` hasta completar las verificaciones formales de marca, denominación/fonética y dominios antes de consolidar branding o lanzamiento.
 
-**Última actualización:** 2026-09-25  
-**Estado:** Milestone A — backend live validado + preview PWA publicado; E2E físico pendiente  
+**Última actualización:** 2026-09-27  
+**Estado:** Milestone A — E2E físico offline/sync y ejecución operacional validados; lifecycle multi-jornada implementado y backend-live validado  
 **Repositorio:** SpukLab/AgroPro-
 
 ## 1. Propósito
@@ -295,7 +295,7 @@ Proyecto Supabase SURKARA:
 - Postgres 17;
 - RLS habilitado en todas las tablas públicas del Milestone A;
 - Security Advisor sin hallazgos;
-- `sync-command` desplegada con JWT obligatorio;
+- `sync-command` desplegada con JWT obligatorio; versión live actual: **v7**;
 - `bootstrap-organization` desplegada con JWT obligatorio;
 - `setup-agronomy-context` desplegada con JWT obligatorio;
 - onboarding transaccional: primera Organization + membership owner;
@@ -361,26 +361,53 @@ Ya están definidos:
 - preview PWA publicado por GitHub Pages en `https://spuklab.github.io/AgroPro-/preview/`;
 - workflow Pages valida rutas PWA y rechaza tokens con formato `sb_secret_...` antes de publicar.
 
-El código inicial de `app/` ya prueba:
+El cliente y backend ya prueban:
 - creación local de AgriculturalOperation;
-- revisión optimista;
-- rechazo de revisiones obsoletas;
-- idempotencia del outbox;
+- revisión optimista y rechazo de revisiones obsoletas;
+- idempotencia del outbox y del backend;
 - dependencias entre comandos;
 - recuperación de comandos interrumpidos en estado syncing;
 - propagación de blocked_dependency;
 - resultados accepted/duplicate/conflict/rejected/pending_external;
-- reintento técnico sin generar un nuevo client_operation_id.
+- reintento técnico sin generar un nuevo client_operation_id;
+- detección de conectividad real contra el Sync Gateway, sin confiar sólo en `navigator.onLine`;
+- auto-sync al recuperar conexión o reabrir la PWA;
+- Operational Team compuesto por maquinaria y operadores;
+- asignaciones temporales `valid_from / valid_to`;
+- reemplazo de integrantes conservando historia;
+- corrección de etiqueta visible sin reescribir identidad maestra;
+- finalización explícita de asignaciones con confirmación;
+- cierre de WorkSession con control de revisión;
+- historial de jornadas completadas;
+- múltiples WorkSessions sobre un mismo ContractorJob;
+- protección contra dos jornadas activas simultáneas sobre el mismo trabajo;
+- finalización explícita del ContractorJob una vez cerradas todas sus jornadas.
+
+### Validación física ya completada
+
+En iPhone/PWA real quedaron validados:
+- creación offline de Operational Team → Contractor Job → WorkSession;
+- drenaje de dependencias al sincronizar;
+- composición offline de maquinaria/operadores;
+- cola de **10 comandos** y auto-sync al reabrir con conectividad;
+- rotación de operador preservando la asignación anterior;
+- corrección de nombre visible del reemplazo;
+- separación visual entre equipo activo e historial de asignaciones.
+
+Ver [Operational Execution Live Validation — 2026-09-27](OPERATIONAL-EXECUTION-LIVE-VALIDATION-2026-09-27.md).
 
 ## 13. Próximo hito
 
-1. abrir el preview publicado desde iPhone/iPad;
-2. ejecutar E2E interactivo real: signup/login → Organization → contexto → operación offline → sync-command → PostgreSQL → read model;
-3. validar recarga offline / PWA instalada en iPhone/iPad;
-4. registrar cualquier diferencia de Safari/iOS respecto del contrato ya validado en backend;
-5. recién después avanzar a Operational Team / WorkSession.
+Cerrar físicamente el lifecycle multi-jornada ya implementado, en este orden:
 
-La validación backend live y la publicación Pages ya no son pendientes. Ver [Milestone A — Live Validation 2026-09-25](MILESTONE-A-LIVE-VALIDATION-2026-09-25.md).
+1. desde la PWA real, ejecutar **Cerrar jornada** sobre la WorkSession activa y confirmar que requiere segundo paso explícito;
+2. verificar auto-sync y que la jornada desaparece del contexto activo y pasa a **Historial de jornadas**;
+3. usar **Nueva jornada** para continuar el mismo ContractorJob y Operational Team, sin crear duplicados;
+4. cerrar esa segunda WorkSession y comprobar que ambas jornadas permanecen trazables;
+5. usar **Finalizar trabajo** únicamente cuando no haya jornada activa;
+6. confirmar que el ContractorJob queda `completed` y deja de ofrecer continuidad.
+
+Backend-live ya validó con rollback tanto el cierre de WorkSession como la secuencia multi-jornada y la finalización del ContractorJob, incluyendo conflictos por doble jornada activa y cierre prematuro del trabajo. Falta cerrar este recorrido en dispositivo físico.
 
 ## 14. Regla de continuidad
 
