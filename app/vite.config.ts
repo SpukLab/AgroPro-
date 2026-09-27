@@ -11,7 +11,10 @@ export default defineConfig({
     VitePWA({
       base,
       scope: base,
-      registerType: "prompt",
+      registerType: "autoUpdate",
+      workbox: {
+        cleanupOutdatedCaches: true
+      },
       includeAssets: ["surkara.svg"],
       manifest: {
         name: "SURKARA",
