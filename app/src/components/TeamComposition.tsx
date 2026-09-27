@@ -2,13 +2,15 @@ import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
   listActiveExecutionContexts,
+  listRecentWorkSessions,
   listTeamComposition,
   queueCorrectTeamAssignmentLabel,
   queueEndTeamAssignment,
   queueReplaceTeamMember,
   queueTeamMember,
   type ActiveExecutionContext,
-  type TeamCompositionItem
+  type TeamCompositionItem,
+  type WorkSessionHistoryItem
 } from "../application/operations/team-composition-service";
 import type {
   EquipmentType,
@@ -98,6 +100,7 @@ export function TeamComposition({
   onPendingChanged
 }: TeamCompositionProps) {
   const [contexts, setContexts] = useState<ActiveExecutionContext[]>([]);
+  const [sessionHistory, setSessionHistory] = useState<WorkSessionHistoryItem[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState("");
   const [composition, setComposition] = useState<TeamCompositionItem[]>([]);
   const [sessionCloseOpen, setSessionCloseOpen] = useState(false);
@@ -153,6 +156,14 @@ export function TeamComposition({
     }
   }
 
+  async function refreshSessionHistory() {
+    try {
+      setSessionHistory(await listRecentWorkSessions(organizationId));
+    } catch (error) {
+      if (online) setMessage(messageOf(error));
+    }
+  }
+
   async function refreshComposition(teamId: string) {
     try {
       setComposition(await listTeamComposition(organizationId, teamId));
@@ -166,11 +177,13 @@ export function TeamComposition({
     setComposition([]);
     setSelectedSessionId("");
     void refreshContexts();
+    void refreshSessionHistory();
   }, [organizationId]);
 
   useEffect(() => {
     setMessage(undefined);
     void refreshContexts();
+    void refreshSessionHistory();
   }, [syncVersion]);
 
   useEffect(() => {
@@ -414,6 +427,30 @@ export function TeamComposition({
     } finally {
       setBusy(false);
     }
+  }
+
+  function formatSessionMoment(value: string) {
+    return new Intl.DateTimeFormat("es-AR", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit"
+    }).format(new Date(value));
+  }
+
+  function formatSessionDuration(startedAt: string, endedAt: string) {
+    const minutes = Math.max(
+      0,
+      Math.round(
+        (new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 60_000
+      )
+    );
+    const hours = Math.floor(minutes / 60);
+    const rest = minutes % 60;
+
+    if (hours === 0) return `${rest} min`;
+    if (rest === 0) return `${hours} h`;
+    return `${hours} h ${rest} min`;
   }
 
   function renderCompositionRow(item: TeamCompositionItem) {
@@ -868,6 +905,32 @@ export function TeamComposition({
 
           {message && <p className="message">{message}</p>}
         </>
+      )}
+
+      {sessionHistory.length > 0 && (
+        <details className="session-history">
+          <summary>
+            Historial de jornadas
+            <span>{sessionHistory.length}</span>
+          </summary>
+          <div className="session-history-list">
+            {sessionHistory.map((session) => (
+              <article className="session-history-row" key={session.sessionId}>
+                <div>
+                  <strong>{session.teamName}</strong>
+                  <span>
+                    {session.cropCode} · {session.fieldName}
+                  </span>
+                </div>
+                <div className="session-history-meta">
+                  <span>{formatSessionMoment(session.startedAt)}</span>
+                  <b>{formatSessionDuration(session.startedAt, session.endedAt)}</b>
+                  <span>{formatSessionMoment(session.endedAt)}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </details>
       )}
     </section>
   );
