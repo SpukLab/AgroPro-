@@ -32,6 +32,13 @@ export function buildAuthRedirectUrl(origin: string, baseUrl: string): string {
   return new URL(baseUrl, origin).toString();
 }
 
+function currentAuthRedirectUrl(): string {
+  return buildAuthRedirectUrl(
+    window.location.origin,
+    import.meta.env.BASE_URL
+  );
+}
+
 export async function signUpWithEmail(
   email: string,
   password: string
@@ -41,10 +48,7 @@ export async function signUpWithEmail(
     email: email.trim(),
     password,
     options: {
-      emailRedirectTo: buildAuthRedirectUrl(
-        window.location.origin,
-        import.meta.env.BASE_URL
-      )
+      emailRedirectTo: currentAuthRedirectUrl()
     }
   });
 
@@ -54,6 +58,20 @@ export async function signUpWithEmail(
     session: data.session,
     needsEmailConfirmation: data.session === null
   };
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  const client = requireSupabase();
+  const { error } = await client.auth.resetPasswordForEmail(email.trim(), {
+    redirectTo: currentAuthRedirectUrl()
+  });
+  if (error) throw error;
+}
+
+export async function updatePassword(password: string): Promise<void> {
+  const client = requireSupabase();
+  const { error } = await client.auth.updateUser({ password });
+  if (error) throw error;
 }
 
 export async function signOut(): Promise<void> {
