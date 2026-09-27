@@ -17,7 +17,13 @@ body {
     #070b0e;
 }
 
-button, input, select { font: inherit; }
+button { font: inherit; }
+
+input,
+select {
+  font-family: inherit;
+  font-size: 16px;
+}
 
 button { -webkit-tap-highlight-color: transparent; }
 
