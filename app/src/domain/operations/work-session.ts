@@ -101,3 +101,38 @@ export function closeWorkSession(
     revision: current.revision + 1
   };
 }
+
+
+export interface EndWorkSessionPayload {
+  sessionId: string;
+  expectedRevision: number;
+  endedAt: string;
+}
+
+export function createEndWorkSessionPayload(input: {
+  sessionId: string;
+  startedAt: string;
+  expectedRevision: number;
+  endedAt: string;
+}): EndWorkSessionPayload {
+  if (!input.sessionId.trim()) {
+    throw new Error("sessionId is required");
+  }
+
+  if (!Number.isInteger(input.expectedRevision) || input.expectedRevision <= 0) {
+    throw new Error("expectedRevision must be a positive integer");
+  }
+
+  const start = new Date(input.startedAt).getTime();
+  const end = new Date(input.endedAt).getTime();
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
+    throw new Error("endedAt must not be before startedAt");
+  }
+
+  return {
+    sessionId: input.sessionId,
+    expectedRevision: input.expectedRevision,
+    endedAt: input.endedAt
+  };
+}
