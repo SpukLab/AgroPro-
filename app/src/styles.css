@@ -706,3 +706,12 @@ button:disabled {
   border-radius: 16px;
   background: #0b120c;
 }
+
+
+.finalization-form {
+  margin: 4px 0 18px;
+  padding: 16px;
+  border: 1px solid #4a4132;
+  border-radius: 16px;
+  background: #120f0a;
+}
