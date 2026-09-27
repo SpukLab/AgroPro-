@@ -50,6 +50,7 @@ export default function App() {
   const [online, setOnline] = useState(navigator.onLine);
   const [deviceId] = useState(getOrCreateDeviceId);
   const bootstrapAttempt = useRef<BootstrapAttempt | null>(null);
+  const syncInFlight = useRef(false);
 
   async function refreshPending() {
     setPending(await surkaraDb.outbox.where("status").equals("pending").count());
@@ -119,6 +120,11 @@ export default function App() {
       setOnboardingMessage(errorMessage(error));
     });
   }, [session?.user.id]);
+
+  useEffect(() => {
+    if (!online || !session || pending === 0 || syncInFlight.current) return;
+    void handleSync(true);
+  }, [online, session?.user.id, pending]);
 
   async function handleAuthSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -275,20 +281,31 @@ export default function App() {
     }
   }
 
-  async function handleSync() {
+  async function handleSync(automatic = false) {
+    if (syncInFlight.current) return;
+
+    syncInFlight.current = true;
     setSyncBusy(true);
-    setSyncMessage(undefined);
+    if (!automatic) setSyncMessage(undefined);
 
     try {
       const result = await syncReadyCommands(createSupabaseSyncTransport());
       await refreshPending();
       setSyncVersion((value) => value + 1);
-      setSyncMessage(
-        `Sync: ${result.accepted} aceptados · ${result.duplicate} duplicados · ${result.conflict} conflictos · ${result.technicalFailures} fallos técnicos`
-      );
+
+      if (!automatic || result.attempted > 0) {
+        setSyncMessage(
+          `${automatic ? "Sync automático" : "Sync"}: ${result.accepted} aceptados · ${result.duplicate} duplicados · ${result.conflict} conflictos · ${result.technicalFailures} fallos técnicos`
+        );
+      }
     } catch (error) {
-      setSyncMessage(errorMessage(error));
+      setSyncMessage(
+        automatic
+          ? `Sync automático pendiente: ${errorMessage(error)}`
+          : errorMessage(error)
+      );
     } finally {
+      syncInFlight.current = false;
       setSyncBusy(false);
     }
   }
@@ -620,6 +637,7 @@ export default function App() {
           actorId={session.user.id}
           deviceId={deviceId}
           syncVersion={syncVersion}
+          online={online}
           onPendingChanged={refreshPending}
         />
       )}
