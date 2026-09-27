@@ -568,3 +568,20 @@ button:disabled {
   outline: 3px solid rgba(143, 209, 79, 0.18);
   outline-offset: 2px;
 }
+
+
+.member-form-heading {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.member-form-heading strong {
+  font-size: 15px;
+}
+
+.member-form-heading span {
+  color: #94a29b;
+  font-size: 12px;
+  line-height: 1.45;
+}

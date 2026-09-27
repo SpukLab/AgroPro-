@@ -37,6 +37,15 @@ const presetLabels: Record<ResourcePreset, string> = {
   support_operator: "Operador / apoyo"
 };
 
+const presetPlaceholders: Record<ResourcePreset, string> = {
+  harvester: "Ej. Cosechadora Vassalli",
+  tractor: "Ej. John Deere 1",
+  grain_cart: "Ej. Monotolva 1",
+  harvester_operator: "Ej. Juan Pérez",
+  tractor_operator: "Ej. Juan Pérez",
+  support_operator: "Ej. Juan Pérez"
+};
+
 const roleLabels: Record<string, string> = {
   harvester: "Cosechadora",
   tractor: "Tractor",
@@ -246,6 +255,13 @@ export function TeamComposition({
           </div>
 
           <form className="form-stack member-form" onSubmit={(event) => void handleAddMember(event)}>
+            <div className="member-form-heading">
+              <strong>Agregar nuevo integrante</strong>
+              <span>
+                Elegí el tipo primero. Cambiar de tipo inicia una carga nueva y no modifica los recursos ya confirmados.
+              </span>
+            </div>
+
             <fieldset className="resource-fieldset">
               <legend>Recurso</legend>
               <div className="resource-picker" role="group" aria-label="Tipo de recurso">
@@ -260,7 +276,13 @@ export function TeamComposition({
                       }
                       type="button"
                       aria-pressed={preset === value}
-                      onClick={() => setPreset(value)}
+                      onClick={() => {
+                        if (value !== preset) {
+                          setPreset(value);
+                          setDisplayName("");
+                          setMessage(undefined);
+                        }
+                      }}
                     >
                       {label}
                     </button>
@@ -270,17 +292,13 @@ export function TeamComposition({
             </fieldset>
 
             <label>
-              Nombre / identificación
+              {preset.includes("operator")
+                ? "Nombre del operador"
+                : `Nombre / identificación de ${presetLabels[preset].toLowerCase()}`}
               <input
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
-                placeholder={
-                  preset === "grain_cart"
-                    ? "Ej. Monotolva 1"
-                    : preset.includes("operator")
-                      ? "Ej. Juan Pérez"
-                      : "Ej. Cosechadora 1"
-                }
+                placeholder={presetPlaceholders[preset]}
                 maxLength={120}
                 required
               />
@@ -297,7 +315,9 @@ export function TeamComposition({
             </label>
 
             <button disabled={busy} type="submit">
-              {busy ? "Preparando…" : "Agregar al equipo offline"}
+              {busy
+                ? "Preparando…"
+                : `Agregar ${presetLabels[preset]} al equipo offline`}
             </button>
           </form>
 
