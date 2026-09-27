@@ -148,7 +148,7 @@ begin
     raise exception 'starting work session did not advance contractor job';
   end if;
 end
-$;
+$$;
 
 do $$
 declare
