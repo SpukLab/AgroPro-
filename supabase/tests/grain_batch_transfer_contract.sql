@@ -3,7 +3,7 @@
 
 set role service_role;
 
-do $
+do $$
 declare
   v_result jsonb;
 begin
@@ -42,9 +42,9 @@ begin
     raise exception 'expected grain test session accepted, got %', v_result;
   end if;
 end
-$;
+$$;
 
-do $
+do $$
 declare
   v_result jsonb;
 begin
