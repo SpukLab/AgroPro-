@@ -32,6 +32,8 @@ begin
          'process_complete_contractor_job',
          'process_record_harvest_measurement',
          'process_record_harvest_downtime',
+         'process_create_grain_batch',
+         'process_record_grain_transfer',
          'process_create_equipment',
          'process_create_team_person',
          'process_assign_team_member',
