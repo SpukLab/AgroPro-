@@ -1403,3 +1403,122 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+
+.grain-storage {
+  margin: 18px 0;
+  border: 1px solid #3b4534;
+  border-radius: 18px;
+  padding: 14px;
+  background: #0b110c;
+}
+
+.grain-storage > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.grain-storage > summary::-webkit-details-marker {
+  display: none;
+}
+
+.grain-storage > summary > div span,
+.grain-storage > summary > div strong {
+  display: block;
+}
+
+.grain-storage > summary > div strong {
+  margin-top: 4px;
+  font-size: 18px;
+}
+
+.grain-storage > summary > span {
+  min-width: 30px;
+  border: 1px solid #42543a;
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #a9b5ad;
+  text-align: center;
+  font-size: 12px;
+}
+
+.grain-storage-intro {
+  margin: 14px 0 0;
+  color: #8f9d95;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.grain-storage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.grain-storage-header button {
+  width: auto;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid #44573c;
+  border-radius: 12px;
+  background: #0a120d;
+  color: #a9d775;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.grain-storage-unit-form,
+.grain-storage-receipt-form {
+  margin-top: 14px;
+}
+
+.grain-storage-unit-form input,
+.grain-storage-unit-form select,
+.grain-storage-receipt-form input,
+.grain-storage-receipt-form select {
+  font-size: 16px;
+}
+
+.grain-storage-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.grain-storage-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid #263128;
+  border-radius: 13px;
+  background: #08100a;
+}
+
+.grain-storage-row strong,
+.grain-storage-row span {
+  display: block;
+}
+
+.grain-storage-row strong {
+  font-size: 13px;
+}
+
+.grain-storage-row span {
+  margin-top: 4px;
+  color: #8f9d95;
+  font-size: 11px;
+}
+
+@media (max-width: 420px) {
+  .grain-storage-row {
+    grid-template-columns: 1fr;
+  }
+}
