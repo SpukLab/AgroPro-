@@ -60,23 +60,29 @@ Estado actual:
   - paradas/esperas;
   - provenance.
 
+Implementado además:
+- GrainBatch primario por WorkSession;
+- GrainTransfer cosechadora → monotolva;
+- Vehicle + Load como bridge explícito al dominio Transporte;
+- StorageUnit tipado como silo/silobolsa;
+- GrainStorageReceipt monotolva → almacenamiento;
+- trazabilidad offline de dependencias e idempotencia en esos movimientos.
+
 Pendientes principales:
-- GrainBatch;
-- GrainTransfer;
-- Load;
 - evidencia/fotos;
 - incidentes;
 - lecturas y correcciones;
-- métricas de rendimiento/costo por hectárea.
+- métricas de rendimiento/costo por hectárea;
+- conciliación de cantidades.
 
 ### Fase 2 — Transporte y logística
 
 Debe conectarse con Harvest sin quedar subordinado a él.
 
 Entidades/reglas propias:
-- Load;
+- Vehicle — **fundación implementada**;
+- Load — **fundación implementada**;
 - Trip;
-- Vehicle;
 - Driver;
 - origen/destino;
 - asignaciones temporales;
@@ -206,9 +212,9 @@ Un vertical puede habilitar el siguiente cuando:
 El foco inmediato continúa siendo cerrar el recorrido operativo de cosecha.
 
 Después:
-1. **GrainTransfer + Load**;
-2. **Transport / Trip**;
-3. **Unload + ticket/peso**;
+1. cerrar validación física de **GrainTransfer + Load + StorageReceipt**;
+2. **Transport / Trip + Driver**;
+3. **Unload + ticket/peso + CPE**;
 4. **GrainReconciliation**;
 5. endurecimiento multi-device/evidencia/costos;
 6. expansión a agricultura ampliada, ganadería, feedlot y tambo por verticales independientes.
