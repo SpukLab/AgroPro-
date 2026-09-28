@@ -234,6 +234,14 @@ export function TeamComposition({
     }
   }, [selected?.teamId, syncVersion]);
 
+  useEffect(() => {
+    if (!selected?.sessionId) return;
+
+    setValidFrom(localDateTimeInput(new Date()));
+    setDisplayName("");
+    setPreset("harvester");
+  }, [selected?.sessionId]);
+
   async function handleEndAssignment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const item = finalizationTarget;
