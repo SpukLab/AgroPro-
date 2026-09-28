@@ -251,7 +251,7 @@ begin
 end
 $$;
 
-do $
+do $$
 declare
   v_result jsonb;
 begin
@@ -289,9 +289,9 @@ begin
     raise exception 'reverse grain transfer was persisted';
   end if;
 end
-$;
+$$;
 
-do $
+do $$
 declare
   v_result jsonb;
 begin
