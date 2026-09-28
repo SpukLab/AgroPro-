@@ -27,6 +27,7 @@ import { getCommandStatus } from "../infra/local/outbox";
 import { SessionFieldRecords } from "./SessionFieldRecords";
 import { GrainFlow } from "./GrainFlow";
 import { TransportLoads } from "./TransportLoads";
+import { GrainStorage } from "./GrainStorage";
 
 interface TeamCompositionProps {
   organizationId: string;
@@ -957,6 +958,24 @@ export function TeamComposition({
           />
 
           <TransportLoads
+            organizationId={organizationId}
+            actorId={actorId}
+            deviceId={deviceId}
+            workSessionId={selected.sessionId}
+            agriculturalOperationId={selected.agriculturalOperationId}
+            equipment={activeComposition
+              .filter((item) => item.subjectKind === "equipment")
+              .map((item) => ({
+                id: item.subjectId,
+                label: item.displayName,
+                role: item.role
+              }))}
+            syncVersion={syncVersion}
+            online={online}
+            onPendingChanged={onPendingChanged}
+          />
+
+          <GrainStorage
             organizationId={organizationId}
             actorId={actorId}
             deviceId={deviceId}
