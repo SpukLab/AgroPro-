@@ -646,48 +646,67 @@ export default function App() {
         )}
       </section>
 
-      <section className="hero">
-        <p>Estado de sincronización local</p>
-        <strong>{pending}</strong>
-        <span>comandos pendientes en este dispositivo</span>
+      <section className="ops-status-bar" aria-label="Estado operativo">
+        <div className="ops-status-main">
+          <span className={`status ${reachability}`}>
+            {reachability === "online"
+              ? "ONLINE"
+              : reachability === "checking"
+                ? "COMPROBANDO"
+                : "OFFLINE"}
+          </span>
+          <div>
+            <strong>{pending === 0 ? "Sincronizado" : `${pending} pendiente${pending === 1 ? "" : "s"}`}</strong>
+            <span>
+              {pending === 0
+                ? "El dispositivo está al día."
+                : "SURKARA conserva los cambios hasta poder enviarlos."}
+            </span>
+          </div>
+        </div>
+        {pending > 0 && (
+          <button
+            className="sync-compact-action"
+            disabled={syncBusy || reachability !== "online"}
+            onClick={() => void handleSync()}
+          >
+            {syncBusy ? "Sincronizando…" : "Sincronizar"}
+          </button>
+        )}
       </section>
 
-      <section className="grid">
-        <article>
-          <span>Acceso</span>
+      {syncMessage && <p className="message sync-inline-message">{syncMessage}</p>}
+
+      <details className="system-panel">
+        <summary>
+          <span>Sistema y diagnóstico</span>
           <b>{activeOrganization?.role}</b>
-        </article>
-        <article>
-          <span>Persistencia local</span>
-          <b>IndexedDB</b>
-        </article>
-        <article>
-          <span>Gateway</span>
-          <b>JWT protegido</b>
-        </article>
-        <article>
-          <span>Dispositivo</span>
-          <b>{deviceId.slice(0, 8)}…</b>
-        </article>
-      </section>
-
-      <section className="card action-card">
-        <div>
-          <span className="step">SINCRONIZACIÓN</span>
-          <h2>Outbox</h2>
+        </summary>
+        <div className="grid system-grid">
+          <article>
+            <span>Acceso</span>
+            <b>{activeOrganization?.role}</b>
+          </article>
+          <article>
+            <span>Persistencia</span>
+            <b>IndexedDB</b>
+          </article>
+          <article>
+            <span>Gateway</span>
+            <b>JWT protegido</b>
+          </article>
+          <article>
+            <span>Dispositivo</span>
+            <b>{deviceId.slice(0, 8)}…</b>
+          </article>
+        </div>
+        <div className="system-sync-note">
+          <span>OUTBOX</span>
           <p>
-            Los comandos locales conservan su identidad durante reintentos y cortes de
-            conexión.
+            Los comandos locales conservan su identidad durante reintentos y cortes de conexión.
           </p>
         </div>
-        <button
-          disabled={syncBusy || reachability !== "online" || pending === 0}
-          onClick={() => void handleSync()}
-        >
-          {syncBusy ? "Sincronizando…" : "Sincronizar pendientes"}
-        </button>
-        {syncMessage && <p className="message">{syncMessage}</p>}
-      </section>
+      </details>
 
       {activeOrganizationId && (
         <AgronomyWorkspace
