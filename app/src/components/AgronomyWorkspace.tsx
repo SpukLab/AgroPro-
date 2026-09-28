@@ -370,8 +370,14 @@ export function AgronomyWorkspace({
         </p>
       </section>
 
-        </div>
-      </details>
+      <TeamComposition
+        organizationId={organizationId}
+        actorId={actorId}
+        deviceId={deviceId}
+        syncVersion={syncVersion}
+        online={online}
+        onPendingChanged={onPendingChanged}
+      />
 
       <details className="planning-tools">
         <summary>
@@ -543,14 +549,8 @@ export function AgronomyWorkspace({
         {executionMessage && <p className="message">{executionMessage}</p>}
       </section>
 
-      <TeamComposition
-        organizationId={organizationId}
-        actorId={actorId}
-        deviceId={deviceId}
-        syncVersion={syncVersion}
-        online={online}
-        onPendingChanged={onPendingChanged}
-      />
+        </div>
+      </details>
     </>
   );
 }
