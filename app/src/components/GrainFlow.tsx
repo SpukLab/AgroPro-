@@ -166,7 +166,7 @@ export function GrainFlow({
     destinationEquipmentId.length > 0;
 
   return (
-    <details className="grain-flow">
+    <details className="grain-flow" open>
       <summary>
         <div>
           <span className="step">MOVIMIENTO DE GRANO</span>

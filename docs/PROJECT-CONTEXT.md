@@ -443,7 +443,9 @@ Validación física inmediata en iPhone:
 
 Backend live ya validó con rollback tanto TransportLoad como GrainStorageReceipt y sus rechazos de fuente inválida.
 
-Después de cerrar esas pruebas físicas, avanzar en este orden:
+Antes de ampliar Transporte, cerrar el refactor de navegación mobile-first: jornada activa primero, navegación directa Parte / Grano / Equipo, subnavegación Transferencia / Camión / Silo y diagnóstico técnico fuera del flujo principal. La dirección de UX por roles y el futuro flujo "Llamar carrero" quedan fijados en [Role-aware UX and Field Signals v0.1](ROLE-AWARE-UX-AND-FIELD-SIGNALS-v0.1.md).
+
+Después de cerrar esas pruebas físicas y validar la navegación, avanzar en este orden:
 
 1. **Transport / Trip + Driver**;
 2. salida/llegada y WaitingTime;
@@ -470,6 +472,7 @@ Cuando se retome SURKARA en otro chat o herramienta, usar en este orden:
 10. `docs/DOMAIN-STRESS-TEST-v0.1.md`
 11. `docs/RESEARCH-SYNTHESIS-2026-09-24.md`
 12. [Sector Expansion Roadmap v0.1](SECTOR-EXPANSION-ROADMAP-v0.1.md)
-13. prototipo histórico `index.html`
+13. [Role-aware UX and Field Signals v0.1](ROLE-AWARE-UX-AND-FIELD-SIGNALS-v0.1.md)
+14. prototipo histórico `index.html`
 
 No asumir que el prototipo representa la arquitectura objetivo.

@@ -370,6 +370,25 @@ export function AgronomyWorkspace({
         </p>
       </section>
 
+      <TeamComposition
+        organizationId={organizationId}
+        actorId={actorId}
+        deviceId={deviceId}
+        syncVersion={syncVersion}
+        online={online}
+        onPendingChanged={onPendingChanged}
+      />
+
+      <details className="planning-tools">
+        <summary>
+          <div>
+            <span className="step">PLANIFICACIÓN Y CONFIGURACIÓN</span>
+            <strong>Preparar otro trabajo</strong>
+          </div>
+          <span>ABRIR</span>
+        </summary>
+        <div className="planning-tools-body">
+
       <section className="card">
         <span className="step">NUEVA OPERACIÓN</span>
         <h2>Cosecha</h2>
@@ -530,14 +549,8 @@ export function AgronomyWorkspace({
         {executionMessage && <p className="message">{executionMessage}</p>}
       </section>
 
-      <TeamComposition
-        organizationId={organizationId}
-        actorId={actorId}
-        deviceId={deviceId}
-        syncVersion={syncVersion}
-        online={online}
-        onPendingChanged={onPendingChanged}
-      />
+        </div>
+      </details>
     </>
   );
 }

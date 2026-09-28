@@ -146,6 +146,8 @@ export function TeamComposition({
   const [preset, setPreset] = useState<ResourcePreset>("harvester");
   const [displayName, setDisplayName] = useState("");
   const [validFrom, setValidFrom] = useState(localDateTimeInput(new Date()));
+  const [workspacePanel, setWorkspacePanel] = useState<"records" | "grain" | "team">("grain");
+  const [grainPanel, setGrainPanel] = useState<"transfer" | "transport" | "storage">("transfer");
 
   const selected = useMemo(
     () => contexts.find((item) => item.sessionId === selectedSessionId) ?? contexts[0],
@@ -922,78 +924,143 @@ export function TeamComposition({
             </>
           )}
 
-          <SessionFieldRecords
-            organizationId={organizationId}
-            actorId={actorId}
-            deviceId={deviceId}
-            workSessionId={selected.sessionId}
-            sessionStartedAt={selected.startedAt}
-            equipment={activeComposition
-              .filter((item) => item.subjectKind === "equipment")
-              .map((item) => ({
-                id: item.subjectId,
-                label: item.displayName
-              }))}
-            syncVersion={syncVersion}
-            online={online}
-            onPendingChanged={onPendingChanged}
-          />
+          <nav className="jornada-nav" aria-label="Áreas de la jornada">
+            <button
+              className={workspacePanel === "records" ? "active" : ""}
+              type="button"
+              onClick={() => setWorkspacePanel("records")}
+            >
+              <span>Parte</span>
+              <b>Registro</b>
+            </button>
+            <button
+              className={workspacePanel === "grain" ? "active" : ""}
+              type="button"
+              onClick={() => setWorkspacePanel("grain")}
+            >
+              <span>Grano</span>
+              <b>Movimientos</b>
+            </button>
+            <button
+              className={workspacePanel === "team" ? "active" : ""}
+              type="button"
+              onClick={() => setWorkspacePanel("team")}
+            >
+              <span>Equipo</span>
+              <b>{activeComposition.length} activos</b>
+            </button>
+          </nav>
 
-          <GrainFlow
-            organizationId={organizationId}
-            actorId={actorId}
-            deviceId={deviceId}
-            workSessionId={selected.sessionId}
-            agriculturalOperationId={selected.agriculturalOperationId}
-            equipment={activeComposition
-              .filter((item) => item.subjectKind === "equipment")
-              .map((item) => ({
-                id: item.subjectId,
-                label: item.displayName,
-                role: item.role
-              }))}
-            syncVersion={syncVersion}
-            online={online}
-            onPendingChanged={onPendingChanged}
-          />
+          {workspacePanel === "records" && (
+            <SessionFieldRecords
+              organizationId={organizationId}
+              actorId={actorId}
+              deviceId={deviceId}
+              workSessionId={selected.sessionId}
+              sessionStartedAt={selected.startedAt}
+              equipment={activeComposition
+                .filter((item) => item.subjectKind === "equipment")
+                .map((item) => ({
+                  id: item.subjectId,
+                  label: item.displayName
+                }))}
+              syncVersion={syncVersion}
+              online={online}
+              onPendingChanged={onPendingChanged}
+            />
+          )}
 
-          <TransportLoads
-            organizationId={organizationId}
-            actorId={actorId}
-            deviceId={deviceId}
-            workSessionId={selected.sessionId}
-            agriculturalOperationId={selected.agriculturalOperationId}
-            equipment={activeComposition
-              .filter((item) => item.subjectKind === "equipment")
-              .map((item) => ({
-                id: item.subjectId,
-                label: item.displayName,
-                role: item.role
-              }))}
-            syncVersion={syncVersion}
-            online={online}
-            onPendingChanged={onPendingChanged}
-          />
+          {workspacePanel === "grain" && (
+            <section className="grain-workspace">
+              <div className="grain-tabs" role="tablist" aria-label="Movimiento de grano">
+                <button
+                  className={grainPanel === "transfer" ? "active" : ""}
+                  type="button"
+                  onClick={() => setGrainPanel("transfer")}
+                >
+                  Transferencia
+                </button>
+                <button
+                  className={grainPanel === "transport" ? "active" : ""}
+                  type="button"
+                  onClick={() => setGrainPanel("transport")}
+                >
+                  Camión
+                </button>
+                <button
+                  className={grainPanel === "storage" ? "active" : ""}
+                  type="button"
+                  onClick={() => setGrainPanel("storage")}
+                >
+                  Silo
+                </button>
+              </div>
 
-          <GrainStorage
-            organizationId={organizationId}
-            actorId={actorId}
-            deviceId={deviceId}
-            workSessionId={selected.sessionId}
-            agriculturalOperationId={selected.agriculturalOperationId}
-            equipment={activeComposition
-              .filter((item) => item.subjectKind === "equipment")
-              .map((item) => ({
-                id: item.subjectId,
-                label: item.displayName,
-                role: item.role
-              }))}
-            syncVersion={syncVersion}
-            online={online}
-            onPendingChanged={onPendingChanged}
-          />
+              {grainPanel === "transfer" && (
+                <GrainFlow
+                  organizationId={organizationId}
+                  actorId={actorId}
+                  deviceId={deviceId}
+                  workSessionId={selected.sessionId}
+                  agriculturalOperationId={selected.agriculturalOperationId}
+                  equipment={activeComposition
+                    .filter((item) => item.subjectKind === "equipment")
+                    .map((item) => ({
+                      id: item.subjectId,
+                      label: item.displayName,
+                      role: item.role
+                    }))}
+                  syncVersion={syncVersion}
+                  online={online}
+                  onPendingChanged={onPendingChanged}
+                />
+              )}
 
-          <div className="composition-list">
+              {grainPanel === "transport" && (
+                <TransportLoads
+                  organizationId={organizationId}
+                  actorId={actorId}
+                  deviceId={deviceId}
+                  workSessionId={selected.sessionId}
+                  agriculturalOperationId={selected.agriculturalOperationId}
+                  equipment={activeComposition
+                    .filter((item) => item.subjectKind === "equipment")
+                    .map((item) => ({
+                      id: item.subjectId,
+                      label: item.displayName,
+                      role: item.role
+                    }))}
+                  syncVersion={syncVersion}
+                  online={online}
+                  onPendingChanged={onPendingChanged}
+                />
+              )}
+
+              {grainPanel === "storage" && (
+                <GrainStorage
+                  organizationId={organizationId}
+                  actorId={actorId}
+                  deviceId={deviceId}
+                  workSessionId={selected.sessionId}
+                  agriculturalOperationId={selected.agriculturalOperationId}
+                  equipment={activeComposition
+                    .filter((item) => item.subjectKind === "equipment")
+                    .map((item) => ({
+                      id: item.subjectId,
+                      label: item.displayName,
+                      role: item.role
+                    }))}
+                  syncVersion={syncVersion}
+                  online={online}
+                  onPendingChanged={onPendingChanged}
+                />
+              )}
+            </section>
+          )}
+
+          {workspacePanel === "team" && (
+            <>
+              <div className="composition-list">
             <div className="composition-section-heading">
               <strong>Equipo activo</strong>
               <span>{activeComposition.length}</span>
@@ -1252,6 +1319,8 @@ export function TeamComposition({
                   : `Agregar ${presetLabels[preset]} al equipo offline`}
             </button>
           </form>
+            </>
+          )}
 
           {message && <p className="message">{message}</p>}
         </>
