@@ -23,6 +23,7 @@ import {
   queueEndWorkSession,
   queueExistingWorkSessionStart
 } from "../application/operations/execution-service";
+import { getCommandStatus } from "../infra/local/outbox";
 
 interface TeamCompositionProps {
   organizationId: string;
@@ -115,13 +116,16 @@ export function TeamComposition({
   const [sessionCloseAt, setSessionCloseAt] = useState(localDateTimeInput(new Date()));
   const [sessionCloseBusy, setSessionCloseBusy] = useState(false);
   const [sessionClosePendingId, setSessionClosePendingId] = useState<string>();
+  const [sessionClosePendingCommandId, setSessionClosePendingCommandId] =
+    useState<string>();
   const [resumeOpen, setResumeOpen] = useState(false);
   const [resumeAt, setResumeAt] = useState(localDateTimeInput(new Date()));
   const [resumeBusy, setResumeBusy] = useState(false);
-  const [resumePending, setResumePending] = useState(false);
+  const [resumePendingCommandId, setResumePendingCommandId] = useState<string>();
   const [jobCompleteOpen, setJobCompleteOpen] = useState(false);
   const [jobCompleteBusy, setJobCompleteBusy] = useState(false);
-  const [jobCompletePending, setJobCompletePending] = useState(false);
+  const [jobCompletePendingCommandId, setJobCompletePendingCommandId] =
+    useState<string>();
   const [busy, setBusy] = useState(false);
   const [endingAssignmentId, setEndingAssignmentId] = useState<string>();
   const [finalizationTarget, setFinalizationTarget] = useState<TeamCompositionItem>();
@@ -150,6 +154,9 @@ export function TeamComposition({
       openJobs[0],
     [openJobs, selectedOpenJobId]
   );
+
+  const resumePending = Boolean(resumePendingCommandId);
+  const jobCompletePending = Boolean(jobCompletePendingCommandId);
 
   const activeComposition = useMemo(
     () => composition.filter((item) => !item.validTo || item.pendingEnd),
@@ -200,6 +207,32 @@ export function TeamComposition({
     }
   }
 
+  async function reconcileLifecyclePendingState() {
+    const activeStatuses = new Set(["pending", "syncing", "pending_external"]);
+
+    if (resumePendingCommandId) {
+      const status = await getCommandStatus(resumePendingCommandId);
+      if (!status || !activeStatuses.has(status)) {
+        setResumePendingCommandId(undefined);
+      }
+    }
+
+    if (jobCompletePendingCommandId) {
+      const status = await getCommandStatus(jobCompletePendingCommandId);
+      if (!status || !activeStatuses.has(status)) {
+        setJobCompletePendingCommandId(undefined);
+      }
+    }
+
+    if (sessionClosePendingCommandId) {
+      const status = await getCommandStatus(sessionClosePendingCommandId);
+      if (!status || !activeStatuses.has(status)) {
+        setSessionClosePendingCommandId(undefined);
+        setSessionClosePendingId(undefined);
+      }
+    }
+  }
+
   async function refreshComposition(teamId: string) {
     try {
       setComposition(await listTeamComposition(organizationId, teamId));
@@ -224,6 +257,7 @@ export function TeamComposition({
     void refreshContexts();
     void refreshOpenJobs();
     void refreshSessionHistory();
+    void reconcileLifecyclePendingState();
   }, [syncVersion]);
 
   useEffect(() => {
@@ -401,7 +435,7 @@ export function TeamComposition({
     setMessage(undefined);
 
     try {
-      await queueEndWorkSession({
+      const command = await queueEndWorkSession({
         actorId,
         organizationId,
         deviceId,
@@ -412,6 +446,7 @@ export function TeamComposition({
       });
 
       setSessionClosePendingId(selected.sessionId);
+      setSessionClosePendingCommandId(command.clientOperationId);
       setSessionCloseOpen(false);
       await onPendingChanged();
       setMessage(
@@ -435,7 +470,7 @@ export function TeamComposition({
     setMessage(undefined);
 
     try {
-      await queueExistingWorkSessionStart({
+      const command = await queueExistingWorkSessionStart({
         actorId,
         organizationId,
         deviceId,
@@ -444,7 +479,7 @@ export function TeamComposition({
         startedAt: new Date(resumeAt).toISOString()
       });
 
-      setResumePending(true);
+      setResumePendingCommandId(command.clientOperationId);
       setResumeOpen(false);
       await onPendingChanged();
       setMessage(
@@ -468,7 +503,7 @@ export function TeamComposition({
     setMessage(undefined);
 
     try {
-      await queueCompleteContractorJob({
+      const command = await queueCompleteContractorJob({
         actorId,
         organizationId,
         deviceId,
@@ -476,7 +511,7 @@ export function TeamComposition({
         expectedRevision: job.revision
       });
 
-      setJobCompletePending(true);
+      setJobCompletePendingCommandId(command.clientOperationId);
       setJobCompleteOpen(false);
       await onPendingChanged();
       setMessage(
