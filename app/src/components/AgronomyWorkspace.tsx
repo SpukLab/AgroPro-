@@ -370,6 +370,19 @@ export function AgronomyWorkspace({
         </p>
       </section>
 
+        </div>
+      </details>
+
+      <details className="planning-tools">
+        <summary>
+          <div>
+            <span className="step">PLANIFICACIÓN Y CONFIGURACIÓN</span>
+            <strong>Preparar otro trabajo</strong>
+          </div>
+          <span>ABRIR</span>
+        </summary>
+        <div className="planning-tools-body">
+
       <section className="card">
         <span className="step">NUEVA OPERACIÓN</span>
         <h2>Cosecha</h2>
