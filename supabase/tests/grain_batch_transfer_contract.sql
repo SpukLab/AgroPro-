@@ -255,6 +255,46 @@ do $$
 declare
   v_result jsonb;
 begin
+  v_result := public.process_record_grain_transfer(
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    '97500000-0000-0000-0000-000000000001',
+    '11111111-1111-1111-1111-111111111111',
+    'device-grain',
+    '97500000-0000-0000-0000-000000000002',
+    '95400000-0000-0000-0000-000000000001',
+    '95400000-0000-0000-0000-000000000001',
+    '95100000-0000-0000-0000-000000000001',
+    '81000000-0000-0000-0000-000000000001',
+    8.5,
+    't',
+    8500,
+    'estimated',
+    '2026-09-28T10:15:00-03:00',
+    'reverse direction must be rejected',
+    '2026-09-28T10:15:00-03:00',
+    '2026-09-28T10:15:01-03:00',
+    1
+  );
+
+  if v_result ->> 'status' <> 'rejected'
+     or v_result ->> 'errorCode' <> 'source_must_be_active_harvester' then
+    raise exception 'expected reverse-direction rejection, got %', v_result;
+  end if;
+
+  if exists (
+    select 1
+      from public.grain_transfers
+     where id = '97500000-0000-0000-0000-000000000002'
+  ) then
+    raise exception 'reverse grain transfer was persisted';
+  end if;
+end
+$$;
+
+do $$
+declare
+  v_result jsonb;
+begin
   v_result := public.process_create_equipment(
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     '98000000-0000-0000-0000-000000000001',
@@ -297,8 +337,8 @@ begin
   );
 
   if v_result ->> 'status' <> 'rejected'
-     or v_result ->> 'errorCode' <> 'source_equipment_not_assigned' then
-    raise exception 'expected source-equipment rejection, got %', v_result;
+     or v_result ->> 'errorCode' <> 'source_must_be_active_harvester' then
+    raise exception 'expected source-harvester rejection, got %', v_result;
   end if;
 
   if exists (

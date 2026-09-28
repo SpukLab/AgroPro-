@@ -82,6 +82,16 @@ export function GrainFlow({
     [equipment]
   );
 
+  const harvesters = useMemo(
+    () => equipment.filter((item) => item.role === "harvester"),
+    [equipment]
+  );
+
+  const grainCarts = useMemo(
+    () => equipment.filter((item) => item.role === "grain_cart"),
+    [equipment]
+  );
+
   async function refresh() {
     try {
       setSnapshot(await listGrainFlow(organizationId, workSessionId));
@@ -91,14 +101,6 @@ export function GrainFlow({
   }
 
   useEffect(() => {
-    const harvester =
-      equipment.find((item) => item.role === "harvester") ?? equipment[0];
-    const grainCart =
-      equipment.find((item) => item.role === "grain_cart") ??
-      equipment.find((item) => item.id !== harvester?.id);
-
-    setSourceEquipmentId(harvester?.id ?? "");
-    setDestinationEquipmentId(grainCart?.id ?? "");
     setQuantity("");
     setNote("");
     setMessage(undefined);
@@ -106,24 +108,17 @@ export function GrainFlow({
   }, [workSessionId, syncVersion]);
 
   useEffect(() => {
-    if (!sourceEquipmentId && equipment[0]?.id) {
-      setSourceEquipmentId(equipment[0].id);
-    }
-
-    if (
-      !destinationEquipmentId ||
-      destinationEquipmentId === sourceEquipmentId
-    ) {
-      const next =
-        equipment.find(
-          (item) =>
-            item.role === "grain_cart" && item.id !== sourceEquipmentId
-        ) ??
-        equipment.find((item) => item.id !== sourceEquipmentId);
-
-      setDestinationEquipmentId(next?.id ?? "");
-    }
-  }, [equipment, sourceEquipmentId, destinationEquipmentId]);
+    setSourceEquipmentId((current) =>
+      harvesters.some((item) => item.id === current)
+        ? current
+        : harvesters[0]?.id ?? ""
+    );
+    setDestinationEquipmentId((current) =>
+      grainCarts.some((item) => item.id === current)
+        ? current
+        : grainCarts[0]?.id ?? ""
+    );
+  }, [harvesters, grainCarts]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -165,10 +160,10 @@ export function GrainFlow({
   }
 
   const canTransfer =
-    equipment.length >= 2 &&
+    harvesters.length > 0 &&
+    grainCarts.length > 0 &&
     sourceEquipmentId.length > 0 &&
-    destinationEquipmentId.length > 0 &&
-    sourceEquipmentId !== destinationEquipmentId;
+    destinationEquipmentId.length > 0;
 
   return (
     <details className="grain-flow">
@@ -194,14 +189,15 @@ export function GrainFlow({
           </strong>
         </div>
         <p>
-          Primera etapa: cosechadora ↔ monotolva/equipos del equipo activo.
-          Camión, silo y silobolsa se incorporan con Load/Storage en el siguiente incremento.
+          Primera etapa: cosechadora → monotolva. El origen sólo admite
+          cosechadoras activas y el destino sólo monotolvas activas. Camión,
+          silo y silobolsa se incorporan con Load/Storage en el siguiente incremento.
         </p>
       </div>
 
-      {equipment.length < 2 ? (
+      {harvesters.length === 0 || grainCarts.length === 0 ? (
         <p className="empty-note">
-          Se necesitan al menos dos recursos de maquinaria activos para registrar una transferencia.
+          Se necesita al menos una cosechadora y una monotolva activas para registrar esta transferencia.
         </p>
       ) : (
         <form
@@ -215,7 +211,7 @@ export function GrainFlow({
               onChange={(event) => setSourceEquipmentId(event.target.value)}
               required
             >
-              {equipment.map((item) => (
+              {harvesters.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.label}
                 </option>
@@ -232,13 +228,11 @@ export function GrainFlow({
               }
               required
             >
-              {equipment
-                .filter((item) => item.id !== sourceEquipmentId)
-                .map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
-                  </option>
-                ))}
+              {grainCarts.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.label}
+                </option>
+              ))}
             </select>
           </label>
 
