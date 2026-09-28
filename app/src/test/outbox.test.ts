@@ -5,6 +5,7 @@ import { surkaraDb } from "../infra/local/db";
 import {
   clearLocalDataForTests,
   enqueueCommand,
+  getCommandStatus,
   getReadyPendingCommands,
   markCommandResult
 } from "../infra/local/outbox";
@@ -48,6 +49,17 @@ describe("offline outbox", () => {
         payload: { id: "different" }
       })
     ).rejects.toThrow(/collision/);
+  });
+
+  it("exposes command status for UI reconciliation", async () => {
+    await enqueueCommand(command("cmd-status"));
+
+    expect(await getCommandStatus("cmd-status")).toBe("pending");
+
+    await markCommandResult("cmd-status", "accepted");
+
+    expect(await getCommandStatus("cmd-status")).toBe("accepted");
+    expect(await getCommandStatus("missing")).toBeUndefined();
   });
 
   it("does not release dependent commands before dependencies are accepted", async () => {

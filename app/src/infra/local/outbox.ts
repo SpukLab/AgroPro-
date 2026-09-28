@@ -50,6 +50,12 @@ export async function enqueueCommand<TPayload>(
   return record;
 }
 
+export async function getCommandStatus(
+  clientOperationId: string
+): Promise<OutboxStatus | undefined> {
+  return (await surkaraDb.outbox.get(clientOperationId))?.status;
+}
+
 export async function getReadyPendingCommands(limit = 50): Promise<OutboxRecord[]> {
   const pending = await surkaraDb.outbox.where("status").equals("pending").sortBy("queuedAtLocal");
   const ready: OutboxRecord[] = [];
