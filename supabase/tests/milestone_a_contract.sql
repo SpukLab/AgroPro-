@@ -36,6 +36,8 @@ begin
          'process_record_grain_transfer',
          'process_create_transport_vehicle',
          'process_create_transport_load',
+         'process_create_grain_storage_unit',
+         'process_record_grain_storage_receipt',
          'process_create_equipment',
          'process_create_team_person',
          'process_assign_team_member',
