@@ -999,3 +999,163 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+
+.field-report {
+  margin: 18px 0;
+  border: 1px solid #26352d;
+  border-radius: 18px;
+  padding: 14px;
+  background: #0a100d;
+}
+
+.field-report > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.field-report > summary::-webkit-details-marker {
+  display: none;
+}
+
+.field-report > summary > div span,
+.field-report > summary > div strong {
+  display: block;
+}
+
+.field-report > summary > div strong {
+  margin-top: 4px;
+  font-size: 18px;
+}
+
+.field-report > summary > span {
+  min-width: 30px;
+  border: 1px solid #34453c;
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #a7b3ac;
+  text-align: center;
+  font-size: 12px;
+}
+
+.field-report-totals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.field-report-totals > div {
+  padding: 11px;
+  border: 1px solid #202b26;
+  border-radius: 13px;
+  background: #08100b;
+}
+
+.field-report-totals span,
+.field-report-totals strong {
+  display: block;
+}
+
+.field-report-totals span {
+  color: #89978f;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.field-report-totals strong {
+  margin-top: 4px;
+  font-size: 17px;
+}
+
+.field-report-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.field-report-modes button {
+  width: 100%;
+  border: 1px solid #34453c;
+  border-radius: 12px;
+  padding: 11px 9px;
+  background: #0c1510;
+  color: #c6d1cb;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.field-report-modes button.active {
+  background: #8fd14f;
+  border-color: #8fd14f;
+  color: #081006;
+}
+
+.field-report-form {
+  margin-top: 14px;
+}
+
+.field-report-form input,
+.field-report-form select {
+  font-size: 16px;
+}
+
+.field-record-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.field-record-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 11px 12px;
+  border: 1px solid #202b26;
+  border-radius: 13px;
+  background: #08100b;
+}
+
+.field-record-row strong,
+.field-record-row span {
+  display: block;
+}
+
+.field-record-row span {
+  margin-top: 3px;
+  color: #8f9d95;
+  font-size: 11px;
+}
+
+.record-sync {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+.record-sync.confirmed {
+  color: #8fd14f;
+}
+
+.record-sync.pending {
+  color: #f1bd62;
+}
+
+.record-sync.error {
+  color: #f08080;
+}
+
+@media (max-width: 420px) {
+  .field-record-row {
+    grid-template-columns: 1fr;
+  }
+
+  .record-sync {
+    justify-self: start;
+  }
+}

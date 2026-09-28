@@ -24,6 +24,7 @@ import {
   queueExistingWorkSessionStart
 } from "../application/operations/execution-service";
 import { getCommandStatus } from "../infra/local/outbox";
+import { SessionFieldRecords } from "./SessionFieldRecords";
 
 interface TeamCompositionProps {
   organizationId: string;
@@ -917,6 +918,23 @@ export function TeamComposition({
               )}
             </>
           )}
+
+          <SessionFieldRecords
+            organizationId={organizationId}
+            actorId={actorId}
+            deviceId={deviceId}
+            workSessionId={selected.sessionId}
+            sessionStartedAt={selected.startedAt}
+            equipment={activeComposition
+              .filter((item) => item.subjectKind === "equipment")
+              .map((item) => ({
+                id: item.subjectId,
+                label: item.displayName
+              }))}
+            syncVersion={syncVersion}
+            online={online}
+            onPendingChanged={onPendingChanged}
+          />
 
           <div className="composition-list">
             <div className="composition-section-heading">
