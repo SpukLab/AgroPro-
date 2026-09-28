@@ -241,6 +241,59 @@ const userHandler = withSupabase({ auth: "user" }, async (req, ctx) => {
         break;
       }
 
+      case "harvest.record_measurement": {
+        const measurementId = stringField(payload, "id")!;
+        if (targetRef !== measurementId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_record_harvest_measurement";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_measurement_id: measurementId,
+          p_work_session_id: stringField(payload, "workSessionId")!,
+          p_equipment_id:
+            stringField(payload, "equipmentId", { optional: true }) ?? null,
+          p_metric_kind: stringField(payload, "kind")!,
+          p_numeric_value: numberField(payload, "value"),
+          p_unit: stringField(payload, "unit")!,
+          p_provenance: stringField(payload, "provenance")!,
+          p_observed_at: stringField(payload, "observedAt")!,
+          p_note: stringField(payload, "note", { optional: true }) ?? null,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
+      case "harvest.record_downtime": {
+        const downtimeId = stringField(payload, "id")!;
+        if (targetRef !== downtimeId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_record_harvest_downtime";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_downtime_id: downtimeId,
+          p_work_session_id: stringField(payload, "workSessionId")!,
+          p_blocking_equipment_id:
+            stringField(payload, "blockingEquipmentId", { optional: true }) ?? null,
+          p_cause: stringField(payload, "cause")!,
+          p_started_at: stringField(payload, "startedAt")!,
+          p_ended_at: stringField(payload, "endedAt")!,
+          p_provenance: stringField(payload, "provenance")!,
+          p_note: stringField(payload, "note", { optional: true }) ?? null,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
       case "operations.create_equipment": {
         const equipmentId = stringField(payload, "id")!;
         if (targetRef !== equipmentId) return targetMismatch(clientOperationId);
