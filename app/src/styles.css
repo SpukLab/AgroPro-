@@ -1285,3 +1285,121 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+
+.transport-loads {
+  margin: 18px 0;
+  border: 1px solid #3a4433;
+  border-radius: 18px;
+  padding: 14px;
+  background: #0b110c;
+}
+
+.transport-loads > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.transport-loads > summary::-webkit-details-marker {
+  display: none;
+}
+
+.transport-loads > summary > div span,
+.transport-loads > summary > div strong {
+  display: block;
+}
+
+.transport-loads > summary > div strong {
+  margin-top: 4px;
+  font-size: 18px;
+}
+
+.transport-loads > summary > span {
+  min-width: 30px;
+  border: 1px solid #42543a;
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #a9b5ad;
+  text-align: center;
+  font-size: 12px;
+}
+
+.transport-loads-intro {
+  margin: 14px 0 0;
+  color: #8f9d95;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.transport-vehicle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.transport-vehicle-header button {
+  width: auto;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid #44573c;
+  border-radius: 12px;
+  background: #0a120d;
+  color: #a9d775;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.transport-vehicle-form,
+.transport-load-form {
+  margin-top: 14px;
+}
+
+.transport-vehicle-form input,
+.transport-load-form input,
+.transport-load-form select {
+  font-size: 16px;
+}
+
+.transport-load-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.transport-load-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid #263128;
+  border-radius: 13px;
+  background: #08100a;
+}
+
+.transport-load-row strong,
+.transport-load-row span {
+  display: block;
+}
+
+.transport-load-row strong {
+  font-size: 13px;
+}
+
+.transport-load-row span {
+  margin-top: 4px;
+  color: #8f9d95;
+  font-size: 11px;
+}
+
+@media (max-width: 420px) {
+  .transport-load-row {
+    grid-template-columns: 1fr;
+  }
+}

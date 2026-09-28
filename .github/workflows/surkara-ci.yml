@@ -101,5 +101,6 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/tests/contractor_job_completion_contract.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/team_composition_contract.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/grain_batch_transfer_contract.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/transport_load_contract.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/team_assignment_lifecycle_contract.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/team_assignment_label_correction_contract.sql
