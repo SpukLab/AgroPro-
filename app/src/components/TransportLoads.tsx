@@ -209,7 +209,7 @@ export function TransportLoads({
   );
 
   return (
-    <details className="transport-loads">
+    <details className="transport-loads" open>
       <summary>
         <div>
           <span className="step">SALIDA DE GRANO</span>
