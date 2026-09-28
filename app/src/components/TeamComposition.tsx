@@ -25,6 +25,7 @@ import {
 } from "../application/operations/execution-service";
 import { getCommandStatus } from "../infra/local/outbox";
 import { SessionFieldRecords } from "./SessionFieldRecords";
+import { GrainFlow } from "./GrainFlow";
 
 interface TeamCompositionProps {
   organizationId: string;
@@ -930,6 +931,24 @@ export function TeamComposition({
               .map((item) => ({
                 id: item.subjectId,
                 label: item.displayName
+              }))}
+            syncVersion={syncVersion}
+            online={online}
+            onPendingChanged={onPendingChanged}
+          />
+
+          <GrainFlow
+            organizationId={organizationId}
+            actorId={actorId}
+            deviceId={deviceId}
+            workSessionId={selected.sessionId}
+            agriculturalOperationId={selected.agriculturalOperationId}
+            equipment={activeComposition
+              .filter((item) => item.subjectKind === "equipment")
+              .map((item) => ({
+                id: item.subjectId,
+                label: item.displayName,
+                role: item.role
               }))}
             syncVersion={syncVersion}
             online={online}
