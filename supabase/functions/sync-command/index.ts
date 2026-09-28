@@ -347,6 +347,58 @@ const userHandler = withSupabase({ auth: "user" }, async (req, ctx) => {
         break;
       }
 
+      case "transport.create_vehicle": {
+        const vehicleId = stringField(payload, "id")!;
+        if (targetRef !== vehicleId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_create_transport_vehicle";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_vehicle_id: vehicleId,
+          p_vehicle_kind: stringField(payload, "vehicleKind")!,
+          p_display_name: stringField(payload, "displayName")!,
+          p_plate: stringField(payload, "plate", { optional: true }) ?? null,
+          p_status: stringField(payload, "status")!,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
+      case "transport.create_load": {
+        const loadId = stringField(payload, "id")!;
+        if (targetRef !== loadId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_create_transport_load";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_load_id: loadId,
+          p_grain_batch_id: stringField(payload, "grainBatchId")!,
+          p_source_work_session_id:
+            stringField(payload, "sourceWorkSessionId")!,
+          p_source_equipment_id: stringField(payload, "sourceEquipmentId")!,
+          p_vehicle_id: stringField(payload, "vehicleId")!,
+          p_quantity_value: numberField(payload, "quantityValue"),
+          p_quantity_unit: stringField(payload, "quantityUnit")!,
+          p_quantity_kg: numberField(payload, "quantityKg"),
+          p_provenance: stringField(payload, "provenance")!,
+          p_loaded_at: stringField(payload, "loadedAt")!,
+          p_status: stringField(payload, "status")!,
+          p_note: stringField(payload, "note", { optional: true }) ?? null,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
       case "operations.create_equipment": {
         const equipmentId = stringField(payload, "id")!;
         if (targetRef !== equipmentId) return targetMismatch(clientOperationId);
