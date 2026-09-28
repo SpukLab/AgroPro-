@@ -211,7 +211,7 @@ export function GrainStorage({
   const availableUnits = units.filter((item) => item.syncState !== "error");
 
   return (
-    <details className="grain-storage">
+    <details className="grain-storage" open>
       <summary>
         <div>
           <span className="step">ALMACENAMIENTO</span>
