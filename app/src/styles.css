@@ -1159,3 +1159,129 @@ button:disabled {
     justify-self: start;
   }
 }
+
+
+.grain-flow {
+  margin: 18px 0;
+  border: 1px solid #34422f;
+  border-radius: 18px;
+  padding: 14px;
+  background: #0b110c;
+}
+
+.grain-flow > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.grain-flow > summary::-webkit-details-marker {
+  display: none;
+}
+
+.grain-flow > summary > div span,
+.grain-flow > summary > div strong {
+  display: block;
+}
+
+.grain-flow > summary > div strong {
+  margin-top: 4px;
+  font-size: 18px;
+}
+
+.grain-flow > summary > span {
+  min-width: 30px;
+  border: 1px solid #42543a;
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #a9b5ad;
+  text-align: center;
+  font-size: 12px;
+}
+
+.grain-flow-context {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #263128;
+  border-radius: 14px;
+  background: #08100a;
+}
+
+.grain-flow-context span,
+.grain-flow-context strong {
+  display: block;
+}
+
+.grain-flow-context span {
+  color: #839087;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.grain-flow-context strong {
+  margin-top: 3px;
+  font-size: 14px;
+}
+
+.grain-flow-context p {
+  margin: 0;
+  color: #8f9d95;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.grain-transfer-form {
+  margin-top: 14px;
+}
+
+.grain-transfer-form input,
+.grain-transfer-form select {
+  font-size: 16px;
+}
+
+.grain-quantity-grid {
+  align-items: end;
+}
+
+.grain-transfer-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.grain-transfer-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid #263128;
+  border-radius: 13px;
+  background: #08100a;
+}
+
+.grain-transfer-row strong,
+.grain-transfer-row span {
+  display: block;
+}
+
+.grain-transfer-row strong {
+  font-size: 13px;
+}
+
+.grain-transfer-row span {
+  margin-top: 4px;
+  color: #8f9d95;
+  font-size: 11px;
+}
+
+@media (max-width: 420px) {
+  .grain-transfer-row {
+    grid-template-columns: 1fr;
+  }
+}
