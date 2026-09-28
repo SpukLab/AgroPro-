@@ -30,6 +30,8 @@ begin
          'process_start_work_session',
          'process_end_work_session',
          'process_complete_contractor_job',
+         'process_record_harvest_measurement',
+         'process_record_harvest_downtime',
          'process_create_equipment',
          'process_create_team_person',
          'process_assign_team_member',
