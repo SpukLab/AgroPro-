@@ -472,10 +472,10 @@ export function AgronomyWorkspace({
 
       <section className="card">
         <span className="step">EJECUCIÓN OPERATIVA</span>
-        <h2>Nueva jornada</h2>
+        <h2>Nuevo trabajo</h2>
         <p>
-          Prepara el equipo operativo, el trabajo y la jornada como comandos offline
-          encadenados para sincronizarlos en orden.
+          Crea un nuevo trabajo operativo, su equipo y la primera jornada como comandos
+          offline encadenados para sincronizarlos en orden.
         </p>
 
         {operations.length === 0 ? (
@@ -521,8 +521,8 @@ export function AgronomyWorkspace({
               {executionBusy
               ? "Preparando…"
               : online
-                ? "Preparar jornada"
-                : "Preparar jornada offline"}
+                ? "Preparar nuevo trabajo"
+                : "Preparar nuevo trabajo offline"}
             </button>
           </form>
         )}

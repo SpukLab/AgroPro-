@@ -144,15 +144,23 @@ Se incorporó una acción distinta de **Cerrar jornada**:
 
 **Backend live: PASS.**
 
-## Pendiente de cierre físico
+## Lifecycle multi-jornada — validación física completa
 
-Aún falta validar en iPhone el lifecycle completo ya probado en backend:
+Se completó en iPhone el recorrido extremo a extremo:
 
-1. **Cerrar jornada** real;
-2. verificar su aparición en **Historial de jornadas**;
-3. iniciar **Nueva jornada** sobre el mismo trabajo;
-4. cerrar esa segunda jornada;
-5. ejecutar **Finalizar trabajo**;
-6. confirmar que el trabajo queda cerrado y ya no ofrece continuidad.
+1. se cerró la Jornada 1 mediante un segundo paso explícito de confirmación;
+2. la jornada dejó el contexto activo y apareció en **Historial de jornadas**;
+3. se inició **Nueva jornada** sobre el mismo ContractorJob y el mismo Operational Team;
+4. backend confirmó que no se duplicaron ni el trabajo ni el equipo;
+5. se cerró Jornada 2;
+6. el historial pasó a mostrar **2 jornadas**;
+7. con 0 jornadas activas se ejecutó **Finalizar trabajo**;
+8. la autoridad remota dejó el ContractorJob en `completed`, revisión 3;
+9. el bloque **Trabajo en curso** desapareció y el historial de jornadas permaneció visible.
 
-Hasta completar esos pasos, no registrar el lifecycle multi-jornada como E2E físico completo.
+Evidencia autoritativa final:
+- ContractorJob: `completed`;
+- WorkSessions activas: **0**;
+- WorkSessions completadas: **2**.
+
+**E2E físico multi-jornada: PASS.**
