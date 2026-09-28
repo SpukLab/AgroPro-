@@ -381,7 +381,10 @@ El cliente y backend ya prueban:
 - historial de jornadas completadas;
 - múltiples WorkSessions sobre un mismo ContractorJob;
 - protección contra dos jornadas activas simultáneas sobre el mismo trabajo;
-- finalización explícita del ContractorJob una vez cerradas todas sus jornadas.
+- finalización explícita del ContractorJob una vez cerradas todas sus jornadas;
+- Parte de jornada Harvest offline-first con hectáreas realizadas, horas de máquina, combustible y paradas/esperas;
+- provenance explícita para mediciones de campo;
+- validación de que horas/combustible sólo referencien equipamiento asignado al equipo activo.
 
 ### Validación física ya completada
 
@@ -404,19 +407,22 @@ Ver [Operational Execution Live Validation — 2026-09-27](OPERATIONAL-EXECUTION
 
 ## 13. Próximo hito
 
-El lifecycle multi-jornada quedó validado físicamente en iPhone. El siguiente incremento debe avanzar sobre la operación real posterior a la jornada:
+El lifecycle multi-jornada quedó validado físicamente en iPhone y el primer **Parte de jornada** ya está implementado, mergeado y validado en backend live.
 
-1. partes de trabajo y hectáreas efectivamente realizadas;
-2. paradas, esperas e incidentes por recurso;
-3. combustible y horas de maquinaria;
-4. transferencias de grano cosechadora → monotolva → camión / silo / silobolsa;
-5. transporte, CPE/descarga y posterior conciliación.
+Orden inmediato:
 
-La UI debe mantener la distinción explícita entre:
-- **Nuevo trabajo**: crea ContractorJob + Operational Team + primera WorkSession;
-- **Nueva jornada**: continúa un ContractorJob existente con otra WorkSession;
-- **Cerrar jornada**: termina sólo la WorkSession actual;
-- **Finalizar trabajo**: cierra el ContractorJob completo.
+1. validar físicamente el Parte de jornada desde iPhone:
+   - hectáreas realizadas;
+   - horas de máquina;
+   - combustible;
+   - parada/espera;
+   - captura offline + auto-sync;
+2. implementar GrainBatch + GrainTransfer;
+3. implementar Load;
+4. conectar el flujo con Transporte / Trip;
+5. registrar descarga, ticket/peso y GrainReconciliation.
+
+La expansión posterior no se detiene en cosecha. La secuencia sectorial completa queda fijada en [Sector Expansion Roadmap v0.1](SECTOR-EXPANSION-ROADMAP-v0.1.md): Transporte, Grain/Reconciliation, agricultura ampliada, ganadería, Feedlot, tambo y capacidades transversales de Field Support/mantenimiento/inventarios.
 
 ## 14. Regla de continuidad
 
@@ -433,6 +439,7 @@ Cuando se retome SURKARA en otro chat o herramienta, usar en este orden:
 9. `docs/DATABASE-CONTRACT-v0.1.md`
 10. `docs/DOMAIN-STRESS-TEST-v0.1.md`
 11. `docs/RESEARCH-SYNTHESIS-2026-09-24.md`
-12. prototipo histórico `index.html`
+12. [Sector Expansion Roadmap v0.1](SECTOR-EXPANSION-ROADMAP-v0.1.md)
+13. prototipo histórico `index.html`
 
 No asumir que el prototipo representa la arquitectura objetivo.
