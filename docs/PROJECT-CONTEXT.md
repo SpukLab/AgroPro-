@@ -2,8 +2,8 @@
 
 > **Naming:** SURKARA es el nombre de producto de trabajo. El repositorio conserva temporalmente el nombre técnico heredado `SpukLab/AgroPro-` hasta completar las verificaciones formales de marca, denominación/fonética y dominios antes de consolidar branding o lanzamiento.
 
-**Última actualización:** 2026-09-27  
-**Estado:** Milestone A — E2E físico offline/sync, composición operativa y lifecycle multi-jornada validados en iPhone; backend-live validado  
+**Última actualización:** 2026-09-28  
+**Estado:** Milestone B en curso — lifecycle multi-jornada validado físicamente; Harvest field records + Grain flow + bridges a Transporte/Storage implementados y backend-live validados  
 **Repositorio:** SpukLab/AgroPro-
 
 ## 1. Propósito
@@ -295,7 +295,7 @@ Proyecto Supabase SURKARA:
 - Postgres 17;
 - RLS habilitado en todas las tablas públicas del Milestone A;
 - Security Advisor sin hallazgos;
-- `sync-command` desplegada con JWT obligatorio; versión live actual: **v7**;
+- `sync-command` desplegada con JWT obligatorio; versión live actual: **v11**;
 - `bootstrap-organization` desplegada con JWT obligatorio;
 - `setup-agronomy-context` desplegada con JWT obligatorio;
 - onboarding transaccional: primera Organization + membership owner;
@@ -384,7 +384,16 @@ El cliente y backend ya prueban:
 - finalización explícita del ContractorJob una vez cerradas todas sus jornadas;
 - Parte de jornada Harvest offline-first con hectáreas realizadas, horas de máquina, combustible y paradas/esperas;
 - provenance explícita para mediciones de campo;
-- validación de que horas/combustible sólo referencien equipamiento asignado al equipo activo.
+- validación de que horas/combustible sólo referencien equipamiento asignado al equipo activo;
+- GrainBatch primario determinístico por WorkSession;
+- GrainTransfer offline-first cosechadora → monotolva;
+- dirección de GrainTransfer reforzada en UI y backend para impedir monotolva → cosechadora en este slice;
+- TransportVehicle + TransportLoad como primer bridge al dominio Transporte;
+- carga monotolva → camión con dependencias offline encadenadas;
+- GrainStorageUnit tipado como silo/silobolsa;
+- GrainStorageReceipt monotolva → silo/silobolsa conservando GrainBatch;
+- cantidades observadas preservadas en kg/t y normalizadas a kg;
+- provenance manual/estimado/máquina/balanza en transferencias, cargas y almacenamiento.
 
 ### Validación física ya completada
 
@@ -401,28 +410,49 @@ En iPhone/PWA real quedaron validados:
 - creación física de Jornada 2 sobre el mismo ContractorJob y Operational Team;
 - cierre físico de Jornada 2 conservando ambas jornadas;
 - finalización física del ContractorJob con 0 jornadas activas y 2 completadas;
-- desaparición del trabajo del bloque Trabajo en curso tras quedar `completed`.
+- desaparición del trabajo del bloque Trabajo en curso tras quedar `completed`;
+- GrainTransfer capturado físicamente offline y drenado con **2 comandos accepted**, sin conflictos ni fallos;
+- bug de inversión origen/destino detectado en esa prueba física y corregido: UI y backend ahora restringen cosechadora → monotolva.
 
 Ver [Operational Execution Live Validation — 2026-09-27](OPERATIONAL-EXECUTION-LIVE-VALIDATION-2026-09-27.md).
 
 ## 13. Próximo hito
 
-El lifecycle multi-jornada quedó validado físicamente en iPhone y el primer **Parte de jornada** ya está implementado, mergeado y validado en backend live.
+El núcleo de cosecha ya cruza el límite hacia Transporte y Storage sin mezclar autoridades de dominio.
 
-Orden inmediato:
+Validación física inmediata en iPhone:
 
-1. validar físicamente el Parte de jornada desde iPhone:
-   - hectáreas realizadas;
+1. **Parte de jornada**:
+   - hectáreas;
    - horas de máquina;
    - combustible;
    - parada/espera;
-   - captura offline + auto-sync;
-2. implementar GrainBatch + GrainTransfer;
-3. implementar Load;
-4. conectar el flujo con Transporte / Trip;
-5. registrar descarga, ticket/peso y GrainReconciliation.
+   - offline → auto-sync;
+2. **Movimiento de grano** corregido:
+   - verificar que Origen sólo ofrezca cosechadoras;
+   - Destino sólo monotolvas;
+   - repetir una transferencia offline y confirmar sync;
+3. **Carga a camión**:
+   - crear/seleccionar camión;
+   - monotolva → camión;
+   - validar cadena offline GrainBatch/Vehicle/Load;
+4. **Silo / silobolsa**:
+   - crear destino;
+   - monotolva → almacenamiento;
+   - validar cadena offline GrainBatch/StorageUnit/Receipt.
 
-La expansión posterior no se detiene en cosecha. La secuencia sectorial completa queda fijada en [Sector Expansion Roadmap v0.1](SECTOR-EXPANSION-ROADMAP-v0.1.md): Transporte, Grain/Reconciliation, agricultura ampliada, ganadería, Feedlot, tambo y capacidades transversales de Field Support/mantenimiento/inventarios.
+Backend live ya validó con rollback tanto TransportLoad como GrainStorageReceipt y sus rechazos de fuente inválida.
+
+Después de cerrar esas pruebas físicas, avanzar en este orden:
+
+1. **Transport / Trip + Driver**;
+2. salida/llegada y WaitingTime;
+3. descarga + ticket/peso;
+4. CPE/documento externo con lifecycle explícito;
+5. GrainReconciliation;
+6. costos y métricas operativas.
+
+La expansión posterior sigue fijada en [Sector Expansion Roadmap v0.1](SECTOR-EXPANSION-ROADMAP-v0.1.md): agricultura ampliada, ganadería, Feedlot, tambo y capacidades transversales de Field Support/mantenimiento/inventarios.
 
 ## 14. Regla de continuidad
 
