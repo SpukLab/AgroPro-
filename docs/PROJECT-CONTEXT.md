@@ -3,7 +3,7 @@
 > **Naming:** SURKARA es el nombre de producto de trabajo. El repositorio conserva temporalmente el nombre técnico heredado `SpukLab/AgroPro-` hasta completar las verificaciones formales de marca, denominación/fonética y dominios antes de consolidar branding o lanzamiento.
 
 **Última actualización:** 2026-09-27  
-**Estado:** Milestone A — E2E físico offline/sync y ejecución operacional validados; lifecycle multi-jornada implementado y backend-live validado  
+**Estado:** Milestone A — E2E físico offline/sync, composición operativa y lifecycle multi-jornada validados en iPhone; backend-live validado  
 **Repositorio:** SpukLab/AgroPro-
 
 ## 1. Propósito
@@ -392,22 +392,31 @@ En iPhone/PWA real quedaron validados:
 - cola de **10 comandos** y auto-sync al reabrir con conectividad;
 - rotación de operador preservando la asignación anterior;
 - corrección de nombre visible del reemplazo;
-- separación visual entre equipo activo e historial de asignaciones.
+- separación visual entre equipo activo e historial de asignaciones;
+- cierre físico de Jornada 1 con paso de confirmación;
+- persistencia de Jornada 1 en Historial de jornadas;
+- creación física de Jornada 2 sobre el mismo ContractorJob y Operational Team;
+- cierre físico de Jornada 2 conservando ambas jornadas;
+- finalización física del ContractorJob con 0 jornadas activas y 2 completadas;
+- desaparición del trabajo del bloque Trabajo en curso tras quedar `completed`.
 
 Ver [Operational Execution Live Validation — 2026-09-27](OPERATIONAL-EXECUTION-LIVE-VALIDATION-2026-09-27.md).
 
 ## 13. Próximo hito
 
-Cerrar físicamente el lifecycle multi-jornada ya implementado, en este orden:
+El lifecycle multi-jornada quedó validado físicamente en iPhone. El siguiente incremento debe avanzar sobre la operación real posterior a la jornada:
 
-1. desde la PWA real, ejecutar **Cerrar jornada** sobre la WorkSession activa y confirmar que requiere segundo paso explícito;
-2. verificar auto-sync y que la jornada desaparece del contexto activo y pasa a **Historial de jornadas**;
-3. usar **Nueva jornada** para continuar el mismo ContractorJob y Operational Team, sin crear duplicados;
-4. cerrar esa segunda WorkSession y comprobar que ambas jornadas permanecen trazables;
-5. usar **Finalizar trabajo** únicamente cuando no haya jornada activa;
-6. confirmar que el ContractorJob queda `completed` y deja de ofrecer continuidad.
+1. partes de trabajo y hectáreas efectivamente realizadas;
+2. paradas, esperas e incidentes por recurso;
+3. combustible y horas de maquinaria;
+4. transferencias de grano cosechadora → monotolva → camión / silo / silobolsa;
+5. transporte, CPE/descarga y posterior conciliación.
 
-Backend-live ya validó con rollback tanto el cierre de WorkSession como la secuencia multi-jornada y la finalización del ContractorJob, incluyendo conflictos por doble jornada activa y cierre prematuro del trabajo. Falta cerrar este recorrido en dispositivo físico.
+La UI debe mantener la distinción explícita entre:
+- **Nuevo trabajo**: crea ContractorJob + Operational Team + primera WorkSession;
+- **Nueva jornada**: continúa un ContractorJob existente con otra WorkSession;
+- **Cerrar jornada**: termina sólo la WorkSession actual;
+- **Finalizar trabajo**: cierra el ContractorJob completo.
 
 ## 14. Regla de continuidad
 
