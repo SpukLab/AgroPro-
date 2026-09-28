@@ -214,7 +214,7 @@ export function SessionFieldRecords({
   const needsEquipment = mode === "hours" || mode === "fuel";
 
   return (
-    <details className="field-report">
+    <details className="field-report" open>
       <summary>
         <div>
           <span className="step">PARTE DE JORNADA</span>
