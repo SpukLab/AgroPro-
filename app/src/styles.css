@@ -1798,3 +1798,164 @@ button:disabled {
     font-size: 11px;
   }
 }
+
+
+.transport-trips {
+  margin: 18px 0;
+  border: 1px solid #3d4b39;
+  border-radius: 18px;
+  padding: 14px;
+  background: #0b110c;
+}
+
+.transport-trips > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.transport-trips > summary::-webkit-details-marker {
+  display: none;
+}
+
+.transport-trips > summary > div span,
+.transport-trips > summary > div strong {
+  display: block;
+}
+
+.transport-trips > summary > div strong {
+  margin-top: 4px;
+  font-size: 18px;
+}
+
+.transport-trips > summary > span {
+  min-width: 30px;
+  border: 1px solid #42543a;
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #a9b5ad;
+  text-align: center;
+  font-size: 12px;
+}
+
+.transport-trips-intro {
+  margin: 14px 0 0;
+  color: #8f9d95;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.transport-driver-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.transport-driver-header button {
+  width: auto;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid #44573c;
+  border-radius: 12px;
+  background: #0a120d;
+  color: #a9d775;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.transport-driver-form,
+.transport-trip-form {
+  margin-top: 14px;
+}
+
+.transport-driver-form input,
+.transport-trip-form input,
+.transport-trip-form select {
+  font-size: 16px;
+}
+
+.transport-trip-context {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #263128;
+  border-radius: 14px;
+  background: #08100a;
+}
+
+.transport-trip-context span,
+.transport-trip-context strong {
+  display: block;
+}
+
+.transport-trip-context span {
+  color: #7f8d84;
+  font-size: 10px;
+  letter-spacing: .08em;
+}
+
+.transport-trip-context strong {
+  margin-top: 3px;
+  font-size: 13px;
+}
+
+.transport-trip-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.transport-trip-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid #263128;
+  border-radius: 13px;
+  background: #08100a;
+}
+
+.transport-trip-row strong,
+.transport-trip-row span {
+  display: block;
+}
+
+.transport-trip-row strong {
+  font-size: 13px;
+}
+
+.transport-trip-row > div:first-child > span {
+  margin-top: 4px;
+  color: #8f9d95;
+  font-size: 11px;
+}
+
+.transport-trip-status {
+  display: grid;
+  justify-items: end;
+  gap: 5px;
+}
+
+.transport-trip-status > b {
+  color: #a9d775;
+  font-size: 10px;
+  letter-spacing: .08em;
+}
+
+@media (max-width: 420px) {
+  .transport-trip-row,
+  .transport-trip-context {
+    grid-template-columns: 1fr;
+  }
+
+  .transport-trip-status {
+    justify-items: start;
+  }
+}
