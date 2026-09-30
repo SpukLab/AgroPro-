@@ -1,7 +1,13 @@
 import type { OfflineCommand } from "../../domain/sync/types";
 import {
+  createArriveTransportTripPayload,
+  createDepartTransportTripPayload,
+  createStartUnloadingTransportTripPayload,
   createTransportDriver,
   createTransportTrip,
+  type ArriveTransportTripPayload,
+  type DepartTransportTripPayload,
+  type StartUnloadingTransportTripPayload,
   type TransportDriver,
   type TransportTrip,
   type TransportTripStatus
@@ -24,6 +30,11 @@ export interface TransportDriverState extends TransportDriver {
 export interface TransportTripState extends Omit<TransportTrip, "status" | "revision"> {
   status: TransportTripStatus;
   revision: number;
+  departedAt?: string;
+  arrivedAt?: string;
+  unloadingStartedAt?: string;
+  activeWaitingTimeId?: string;
+  waitingStartedAt?: string;
   syncState: "confirmed" | "pending" | "error";
   commandId?: string;
 }
@@ -296,6 +307,205 @@ export async function queueTransportTrip(input: {
   return command;
 }
 
+async function mutateLocalTrip(
+  organizationId: string,
+  workSessionId: string,
+  tripId: string,
+  mutate: (trip: TransportTripState) => TransportTripState
+) {
+  const key = tripCacheKey(organizationId, workSessionId);
+  const current =
+    (await getEntityCache<TransportTripState[]>(key)) ??
+    (await listTransportTrips(organizationId, workSessionId));
+
+  const next = current.map((trip) =>
+    trip.id === tripId ? mutate(trip) : trip
+  );
+
+  await putEntityCache(key, "transport-trips", workSessionId, next);
+}
+
+export async function queueDepartTransportTrip(input: {
+  actorId: string;
+  organizationId: string;
+  deviceId: string;
+  workSessionId: string;
+  tripId: string;
+  departedAt: string;
+}): Promise<OfflineCommand<DepartTransportTripPayload>> {
+  const trips = await listTransportTrips(
+    input.organizationId,
+    input.workSessionId
+  );
+  const trip = trips.find((item) => item.id === input.tripId);
+
+  if (!trip || trip.syncState === "error") {
+    throw new Error("trip is not available");
+  }
+
+  if (trip.status !== "loaded") {
+    throw new Error("trip is not ready to depart");
+  }
+
+  const payload = createDepartTransportTripPayload({
+    tripId: trip.id,
+    expectedRevision: trip.revision,
+    departedAt: input.departedAt
+  });
+
+  const command: OfflineCommand<DepartTransportTripPayload> = {
+    ...common(input),
+    clientOperationId: crypto.randomUUID(),
+    commandType: "transport.depart_trip",
+    targetRef: trip.id,
+    baseRevision: trip.revision,
+    payload,
+    dependencies:
+      trip.syncState === "pending" && trip.commandId ? [trip.commandId] : []
+  };
+
+  await enqueueCommand(command);
+
+  await mutateLocalTrip(
+    input.organizationId,
+    input.workSessionId,
+    trip.id,
+    (current) => ({
+      ...current,
+      status: "departed",
+      revision: current.revision + 1,
+      departedAt: input.departedAt,
+      syncState: "pending",
+      commandId: command.clientOperationId
+    })
+  );
+
+  return command;
+}
+
+export async function queueArriveTransportTrip(input: {
+  actorId: string;
+  organizationId: string;
+  deviceId: string;
+  workSessionId: string;
+  tripId: string;
+  arrivedAt: string;
+  note?: string;
+}): Promise<OfflineCommand<ArriveTransportTripPayload>> {
+  const trips = await listTransportTrips(
+    input.organizationId,
+    input.workSessionId
+  );
+  const trip = trips.find((item) => item.id === input.tripId);
+
+  if (!trip || trip.syncState === "error") {
+    throw new Error("trip is not available");
+  }
+
+  if (trip.status !== "departed") {
+    throw new Error("trip is not in transit");
+  }
+
+  const payload = createArriveTransportTripPayload({
+    tripId: trip.id,
+    expectedRevision: trip.revision,
+    arrivedAt: input.arrivedAt,
+    cause: "destination_queue",
+    note: input.note
+  });
+
+  const command: OfflineCommand<ArriveTransportTripPayload> = {
+    ...common(input),
+    clientOperationId: crypto.randomUUID(),
+    commandType: "transport.arrive_trip",
+    targetRef: trip.id,
+    baseRevision: trip.revision,
+    payload,
+    dependencies:
+      trip.syncState === "pending" && trip.commandId ? [trip.commandId] : []
+  };
+
+  await enqueueCommand(command);
+
+  await mutateLocalTrip(
+    input.organizationId,
+    input.workSessionId,
+    trip.id,
+    (current) => ({
+      ...current,
+      status: "waiting",
+      revision: current.revision + 1,
+      arrivedAt: input.arrivedAt,
+      activeWaitingTimeId: payload.waitingTimeId,
+      waitingStartedAt: input.arrivedAt,
+      syncState: "pending",
+      commandId: command.clientOperationId
+    })
+  );
+
+  return command;
+}
+
+export async function queueStartUnloadingTransportTrip(input: {
+  actorId: string;
+  organizationId: string;
+  deviceId: string;
+  workSessionId: string;
+  tripId: string;
+  unloadingStartedAt: string;
+}): Promise<OfflineCommand<StartUnloadingTransportTripPayload>> {
+  const trips = await listTransportTrips(
+    input.organizationId,
+    input.workSessionId
+  );
+  const trip = trips.find((item) => item.id === input.tripId);
+
+  if (!trip || trip.syncState === "error") {
+    throw new Error("trip is not available");
+  }
+
+  if (trip.status !== "waiting" || !trip.activeWaitingTimeId) {
+    throw new Error("trip has no active destination wait");
+  }
+
+  const payload = createStartUnloadingTransportTripPayload({
+    tripId: trip.id,
+    waitingTimeId: trip.activeWaitingTimeId,
+    expectedRevision: trip.revision,
+    unloadingStartedAt: input.unloadingStartedAt
+  });
+
+  const command: OfflineCommand<StartUnloadingTransportTripPayload> = {
+    ...common(input),
+    clientOperationId: crypto.randomUUID(),
+    commandType: "transport.start_unloading",
+    targetRef: trip.id,
+    baseRevision: trip.revision,
+    payload,
+    dependencies:
+      trip.syncState === "pending" && trip.commandId ? [trip.commandId] : []
+  };
+
+  await enqueueCommand(command);
+
+  await mutateLocalTrip(
+    input.organizationId,
+    input.workSessionId,
+    trip.id,
+    (current) => ({
+      ...current,
+      status: "unloading",
+      revision: current.revision + 1,
+      unloadingStartedAt: input.unloadingStartedAt,
+      activeWaitingTimeId: undefined,
+      syncState: "pending",
+      commandId: command.clientOperationId
+    })
+  );
+
+  return command;
+}
+
 export async function listTransportTrips(
   organizationId: string,
   workSessionId: string
@@ -314,7 +524,7 @@ export async function listTransportTrips(
     const { data: tripRows, error: tripError } = await supabase
       .from("transport_trips")
       .select(
-        "id, load_id, source_work_session_id, origin_label, destination_label, planned_departure_at, status, revision"
+        "id, load_id, source_work_session_id, origin_label, destination_label, planned_departure_at, departed_at, arrived_at, unloading_started_at, status, revision"
       )
       .eq("organization_id", organizationId)
       .eq("source_work_session_id", workSessionId)
@@ -325,11 +535,16 @@ export async function listTransportTrips(
     const tripIds = (tripRows ?? []).map((row) => row.id as string);
     const vehicleByTrip = new Map<string, string>();
     const driverByTrip = new Map<string, string>();
+    const waitingByTrip = new Map<
+      string,
+      { id: string; startedAt: string }
+    >();
 
     if (tripIds.length > 0) {
       const [
         { data: vehicleAssignments, error: vehicleError },
-        { data: driverAssignments, error: driverError }
+        { data: driverAssignments, error: driverError },
+        { data: waitingRows, error: waitingError }
       ] = await Promise.all([
         supabase
           .from("transport_trip_vehicle_assignments")
@@ -342,17 +557,30 @@ export async function listTransportTrips(
           .select("trip_id, driver_id")
           .eq("organization_id", organizationId)
           .in("trip_id", tripIds)
-          .is("valid_to", null)
+          .is("valid_to", null),
+        supabase
+          .from("transport_waiting_times")
+          .select("id, trip_id, started_at")
+          .eq("organization_id", organizationId)
+          .in("trip_id", tripIds)
+          .is("ended_at", null)
       ]);
 
       if (vehicleError) throw vehicleError;
       if (driverError) throw driverError;
+      if (waitingError) throw waitingError;
 
       for (const row of vehicleAssignments ?? []) {
         vehicleByTrip.set(row.trip_id as string, row.vehicle_id as string);
       }
       for (const row of driverAssignments ?? []) {
         driverByTrip.set(row.trip_id as string, row.driver_id as string);
+      }
+      for (const row of waitingRows ?? []) {
+        waitingByTrip.set(row.trip_id as string, {
+          id: row.id as string,
+          startedAt: row.started_at as string
+        });
       }
     }
 
@@ -366,6 +594,13 @@ export async function listTransportTrips(
         originLabel: row.origin_label as string,
         destinationLabel: row.destination_label as string,
         plannedDepartureAt: row.planned_departure_at as string,
+        departedAt: (row.departed_at as string | null) ?? undefined,
+        arrivedAt: (row.arrived_at as string | null) ?? undefined,
+        unloadingStartedAt:
+          (row.unloading_started_at as string | null) ?? undefined,
+        activeWaitingTimeId: waitingByTrip.get(row.id as string)?.id,
+        waitingStartedAt:
+          waitingByTrip.get(row.id as string)?.startedAt,
         status: row.status as TransportTripStatus,
         revision: Number(row.revision),
         syncState: "confirmed" as const
