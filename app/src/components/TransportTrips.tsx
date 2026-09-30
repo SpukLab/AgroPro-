@@ -17,6 +17,15 @@ import {
   type TransportLoadState,
   type TransportVehicleState
 } from "../application/transport/load-service";
+import {
+  listTransportUnloadResults,
+  queueCompleteTransportUnload,
+  type TransportUnloadResultState
+} from "../application/transport/unload-service";
+import type {
+  TransportUnloadProvenance,
+  TransportUnloadUnit
+} from "../domain/transport/unload";
 
 interface TransportTripsProps {
   organizationId: string;
@@ -90,6 +99,7 @@ export function TransportTrips({
   const [vehicles, setVehicles] = useState<TransportVehicleState[]>([]);
   const [drivers, setDrivers] = useState<TransportDriverState[]>([]);
   const [trips, setTrips] = useState<TransportTripState[]>([]);
+  const [unloads, setUnloads] = useState<TransportUnloadResultState[]>([]);
   const [loadId, setLoadId] = useState("");
   const [driverId, setDriverId] = useState("");
   const [destinationLabel, setDestinationLabel] = useState("");
@@ -101,6 +111,14 @@ export function TransportTrips({
   const [licenseRef, setLicenseRef] = useState("");
   const [busy, setBusy] = useState(false);
   const [lifecycleBusyId, setLifecycleBusyId] = useState<string>();
+  const [unloadTargetId, setUnloadTargetId] = useState<string>();
+  const [unloadQuantity, setUnloadQuantity] = useState("");
+  const [unloadUnit, setUnloadUnit] = useState<TransportUnloadUnit>("t");
+  const [unloadProvenance, setUnloadProvenance] =
+    useState<TransportUnloadProvenance>("scale");
+  const [moisturePercent, setMoisturePercent] = useState("");
+  const [ticketRef, setTicketRef] = useState("");
+  const [unloadNote, setUnloadNote] = useState("");
   const [message, setMessage] = useState<string>();
 
   const vehicleMap = useMemo(
@@ -111,6 +129,11 @@ export function TransportTrips({
   const driverMap = useMemo(
     () => new Map(drivers.map((item) => [item.id, item])),
     [drivers]
+  );
+
+  const unloadByTrip = useMemo(
+    () => new Map(unloads.map((item) => [item.tripId, item])),
+    [unloads]
   );
 
   const tripLoadIds = useMemo(
@@ -135,18 +158,25 @@ export function TransportTrips({
 
   async function refresh() {
     try {
-      const [nextLoads, nextVehicles, nextDrivers, nextTrips] =
-        await Promise.all([
-          listTransportLoads(organizationId, workSessionId),
-          listTransportVehicles(organizationId),
-          listTransportDrivers(organizationId),
-          listTransportTrips(organizationId, workSessionId)
-        ]);
+      const [
+        nextLoads,
+        nextVehicles,
+        nextDrivers,
+        nextTrips,
+        nextUnloads
+      ] = await Promise.all([
+        listTransportLoads(organizationId, workSessionId),
+        listTransportVehicles(organizationId),
+        listTransportDrivers(organizationId),
+        listTransportTrips(organizationId, workSessionId),
+        listTransportUnloadResults(organizationId, workSessionId)
+      ]);
 
       setLoads(nextLoads);
       setVehicles(nextVehicles);
       setDrivers(nextDrivers);
       setTrips(nextTrips);
+      setUnloads(nextUnloads);
     } catch (error) {
       if (online) setMessage(messageOf(error));
     }
@@ -156,6 +186,11 @@ export function TransportTrips({
     setDestinationLabel("");
     setPlannedDepartureAt(localDateTimeInput(new Date()));
     setAddingDriver(false);
+    setUnloadTargetId(undefined);
+    setUnloadQuantity("");
+    setMoisturePercent("");
+    setTicketRef("");
+    setUnloadNote("");
     setMessage(undefined);
     void refresh();
   }, [workSessionId, syncVersion]);
@@ -313,6 +348,50 @@ export function TransportTrips({
         online
           ? "Inicio de descarga enviado a sincronización."
           : "Inicio de descarga guardado offline."
+      );
+    } catch (error) {
+      setMessage(messageOf(error));
+    } finally {
+      setLifecycleBusyId(undefined);
+    }
+  }
+
+  async function handleUnload(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!unloadTargetId) return;
+
+    setLifecycleBusyId(unloadTargetId);
+    setMessage(undefined);
+
+    try {
+      await queueCompleteTransportUnload({
+        actorId,
+        organizationId,
+        deviceId,
+        workSessionId,
+        tripId: unloadTargetId,
+        quantityValue: Number(unloadQuantity.replace(",", ".")),
+        quantityUnit: unloadUnit,
+        provenance: unloadProvenance,
+        unloadedAt: new Date().toISOString(),
+        moisturePercent: moisturePercent.trim()
+          ? Number(moisturePercent.replace(",", "."))
+          : undefined,
+        ticketRef,
+        note: unloadNote
+      });
+
+      setUnloadTargetId(undefined);
+      setUnloadQuantity("");
+      setMoisturePercent("");
+      setTicketRef("");
+      setUnloadNote("");
+      await onPendingChanged();
+      await refresh();
+      setMessage(
+        online
+          ? "Descarga final enviada a sincronización."
+          : "Descarga final guardada offline."
       );
     } catch (error) {
       setMessage(messageOf(error));
@@ -566,11 +645,148 @@ export function TransportTrips({
                           : "Descarga offline"}
                     </button>
                   )}
+                  {trip.status === "unloading" && (
+                    <button
+                      className="trip-lifecycle-action"
+                      type="button"
+                      disabled={lifecycleBusyId === trip.id}
+                      onClick={() => {
+                        setUnloadTargetId(trip.id);
+                        setUnloadQuantity("");
+                        setMoisturePercent("");
+                        setTicketRef("");
+                        setUnloadNote("");
+                      }}
+                    >
+                      Registrar descarga
+                    </button>
+                  )}
+                  {unloadByTrip.get(trip.id) && (
+                    <span className="trip-unload-summary">
+                      {formatQuantity(
+                        unloadByTrip.get(trip.id)!.quantityValue,
+                        unloadByTrip.get(trip.id)!.quantityUnit
+                      )}
+                      {unloadByTrip.get(trip.id)!.ticketRef
+                        ? " · " + unloadByTrip.get(trip.id)!.ticketRef
+                        : ""}
+                    </span>
+                  )}
                 </div>
               </article>
             );
           })}
         </div>
+      )}
+
+      {unloadTargetId && (
+        <form
+          className="form-stack transport-unload-form"
+          onSubmit={(event) => void handleUnload(event)}
+        >
+          <div className="transport-unload-heading">
+            <strong>Registrar descarga final</strong>
+            <span>
+              Peso/ticket del destino. Este valor queda separado de las
+              estimaciones previas.
+            </span>
+          </div>
+
+          <div className="inline-grid">
+            <label>
+              Peso descargado
+              <input
+                inputMode="decimal"
+                value={unloadQuantity}
+                onChange={(event) => setUnloadQuantity(event.target.value)}
+                placeholder="Ej. 29,2"
+                required
+              />
+            </label>
+
+            <label>
+              Unidad
+              <select
+                value={unloadUnit}
+                onChange={(event) =>
+                  setUnloadUnit(event.target.value as TransportUnloadUnit)
+                }
+              >
+                <option value="t">Toneladas</option>
+                <option value="kg">Kilogramos</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            Origen del peso
+            <select
+              value={unloadProvenance}
+              onChange={(event) =>
+                setUnloadProvenance(
+                  event.target.value as TransportUnloadProvenance
+                )
+              }
+            >
+              <option value="scale">Balanza</option>
+              <option value="ticket">Ticket</option>
+              <option value="manual">Manual</option>
+            </select>
+          </label>
+
+          <div className="inline-grid">
+            <label>
+              Humedad % opcional
+              <input
+                inputMode="decimal"
+                value={moisturePercent}
+                onChange={(event) => setMoisturePercent(event.target.value)}
+                placeholder="Ej. 13,5"
+              />
+            </label>
+
+            <label>
+              Ticket / referencia
+              <input
+                value={ticketRef}
+                onChange={(event) => setTicketRef(event.target.value)}
+                placeholder="Ej. TKT-1024"
+                maxLength={80}
+              />
+            </label>
+          </div>
+
+          <label>
+            Nota opcional
+            <input
+              value={unloadNote}
+              onChange={(event) => setUnloadNote(event.target.value)}
+              placeholder="Ej. peso neto de descarga"
+              maxLength={240}
+            />
+          </label>
+
+          <div className="rotation-buttons">
+            <button
+              className="rotation-cancel"
+              type="button"
+              onClick={() => setUnloadTargetId(undefined)}
+              disabled={Boolean(lifecycleBusyId)}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={Boolean(lifecycleBusyId) || !unloadQuantity.trim()}
+            >
+              {lifecycleBusyId
+                ? "Guardando…"
+                : online
+                  ? "Confirmar descarga"
+                  : "Guardar descarga offline"}
+            </button>
+          </div>
+        </form>
       )}
     </details>
   );
