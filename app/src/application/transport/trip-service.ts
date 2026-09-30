@@ -307,7 +307,7 @@ export async function queueTransportTrip(input: {
   return command;
 }
 
-async function mutateLocalTrip(
+export async function mutateLocalTransportTrip(
   organizationId: string,
   workSessionId: string,
   tripId: string,
@@ -366,7 +366,7 @@ export async function queueDepartTransportTrip(input: {
 
   await enqueueCommand(command);
 
-  await mutateLocalTrip(
+  await mutateLocalTransportTrip(
     input.organizationId,
     input.workSessionId,
     trip.id,
@@ -427,7 +427,7 @@ export async function queueArriveTransportTrip(input: {
 
   await enqueueCommand(command);
 
-  await mutateLocalTrip(
+  await mutateLocalTransportTrip(
     input.organizationId,
     input.workSessionId,
     trip.id,
@@ -488,7 +488,7 @@ export async function queueStartUnloadingTransportTrip(input: {
 
   await enqueueCommand(command);
 
-  await mutateLocalTrip(
+  await mutateLocalTransportTrip(
     input.organizationId,
     input.workSessionId,
     trip.id,

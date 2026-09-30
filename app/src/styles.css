@@ -1976,3 +1976,37 @@ button:disabled {
 .trip-lifecycle-action:disabled {
   opacity: .48;
 }
+
+
+.transport-unload-form {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid #4a5136;
+  border-radius: 16px;
+  background: #0b120c;
+}
+
+.transport-unload-form input,
+.transport-unload-form select {
+  font-size: 16px;
+}
+
+.transport-unload-heading {
+  display: grid;
+  gap: 4px;
+}
+
+.transport-unload-heading strong {
+  font-size: 15px;
+}
+
+.transport-unload-heading span {
+  color: #94a29b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.trip-unload-summary {
+  color: #9bcf71 !important;
+  font-size: 10px !important;
+}

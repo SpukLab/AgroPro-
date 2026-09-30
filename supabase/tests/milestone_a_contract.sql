@@ -41,6 +41,7 @@ begin
          'process_depart_transport_trip',
          'process_arrive_transport_trip',
          'process_start_unloading_transport_trip',
+         'process_complete_transport_unload',
          'process_create_grain_storage_unit',
          'process_record_grain_storage_receipt',
          'process_create_equipment',
