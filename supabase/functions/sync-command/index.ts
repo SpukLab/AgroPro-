@@ -515,6 +515,42 @@ const userHandler = withSupabase({ auth: "user" }, async (req, ctx) => {
         break;
       }
 
+      case "transport.complete_unload": {
+        const resultId = stringField(payload, "id")!;
+        const tripId = stringField(payload, "tripId")!;
+        if (targetRef !== tripId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_complete_transport_unload";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_result_id: resultId,
+          p_trip_id: tripId,
+          p_load_id: stringField(payload, "loadId")!,
+          p_expected_revision: numberField(payload, "expectedRevision"),
+          p_destination_label: stringField(payload, "destinationLabel")!,
+          p_quantity_value: numberField(payload, "quantityValue"),
+          p_quantity_unit: stringField(payload, "quantityUnit")!,
+          p_quantity_kg: numberField(payload, "quantityKg"),
+          p_provenance: stringField(payload, "provenance")!,
+          p_unloaded_at: stringField(payload, "unloadedAt")!,
+          p_moisture_percent:
+            payload.moisturePercent == null
+              ? null
+              : numberField(payload, "moisturePercent"),
+          p_ticket_ref:
+            stringField(payload, "ticketRef", { optional: true }) ?? null,
+          p_note: stringField(payload, "note", { optional: true }) ?? null,
+          p_status: stringField(payload, "status")!,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
       case "storage.create_unit": {
         const storageUnitId = stringField(payload, "id")!;
         if (targetRef !== storageUnitId) return targetMismatch(clientOperationId);
