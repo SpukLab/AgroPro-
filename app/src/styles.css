@@ -1959,3 +1959,20 @@ button:disabled {
     justify-items: start;
   }
 }
+
+
+.trip-lifecycle-action {
+  width: auto !important;
+  min-height: 36px;
+  padding: 7px 10px !important;
+  border: 1px solid #41613a !important;
+  border-radius: 10px !important;
+  background: #111a10 !important;
+  color: #a9df78 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+
+.trip-lifecycle-action:disabled {
+  opacity: .48;
+}
