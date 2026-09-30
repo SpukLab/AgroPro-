@@ -3,6 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
   listTransportDrivers,
   listTransportTrips,
+  queueArriveTransportTrip,
+  queueDepartTransportTrip,
+  queueStartUnloadingTransportTrip,
   queueTransportDriver,
   queueTransportTrip,
   type TransportDriverState,
@@ -97,6 +100,7 @@ export function TransportTrips({
   const [driverName, setDriverName] = useState("");
   const [licenseRef, setLicenseRef] = useState("");
   const [busy, setBusy] = useState(false);
+  const [lifecycleBusyId, setLifecycleBusyId] = useState<string>();
   const [message, setMessage] = useState<string>();
 
   const vehicleMap = useMemo(
@@ -238,6 +242,82 @@ export function TransportTrips({
       setMessage(messageOf(error));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleDepart(trip: TransportTripState) {
+    setLifecycleBusyId(trip.id);
+    setMessage(undefined);
+    try {
+      await queueDepartTransportTrip({
+        actorId,
+        organizationId,
+        deviceId,
+        workSessionId,
+        tripId: trip.id,
+        departedAt: new Date().toISOString()
+      });
+      await onPendingChanged();
+      await refresh();
+      setMessage(
+        online ? "Salida enviada a sincronización." : "Salida guardada offline."
+      );
+    } catch (error) {
+      setMessage(messageOf(error));
+    } finally {
+      setLifecycleBusyId(undefined);
+    }
+  }
+
+  async function handleArrive(trip: TransportTripState) {
+    setLifecycleBusyId(trip.id);
+    setMessage(undefined);
+    try {
+      await queueArriveTransportTrip({
+        actorId,
+        organizationId,
+        deviceId,
+        workSessionId,
+        tripId: trip.id,
+        arrivedAt: new Date().toISOString()
+      });
+      await onPendingChanged();
+      await refresh();
+      setMessage(
+        online
+          ? "Llegada y espera enviadas a sincronización."
+          : "Llegada y espera guardadas offline."
+      );
+    } catch (error) {
+      setMessage(messageOf(error));
+    } finally {
+      setLifecycleBusyId(undefined);
+    }
+  }
+
+  async function handleStartUnloading(trip: TransportTripState) {
+    setLifecycleBusyId(trip.id);
+    setMessage(undefined);
+    try {
+      await queueStartUnloadingTransportTrip({
+        actorId,
+        organizationId,
+        deviceId,
+        workSessionId,
+        tripId: trip.id,
+        unloadingStartedAt: new Date().toISOString()
+      });
+      await onPendingChanged();
+      await refresh();
+      setMessage(
+        online
+          ? "Inicio de descarga enviado a sincronización."
+          : "Inicio de descarga guardado offline."
+      );
+    } catch (error) {
+      setMessage(messageOf(error));
+    } finally {
+      setLifecycleBusyId(undefined);
     }
   }
 
@@ -444,6 +524,48 @@ export function TransportTrips({
                         ? "PENDIENTE"
                         : "ERROR"}
                   </span>
+                  {trip.status === "loaded" && (
+                    <button
+                      className="trip-lifecycle-action"
+                      type="button"
+                      disabled={lifecycleBusyId === trip.id}
+                      onClick={() => void handleDepart(trip)}
+                    >
+                      {lifecycleBusyId === trip.id
+                        ? "Guardando…"
+                        : online
+                          ? "Marcar salida"
+                          : "Salida offline"}
+                    </button>
+                  )}
+                  {trip.status === "departed" && (
+                    <button
+                      className="trip-lifecycle-action"
+                      type="button"
+                      disabled={lifecycleBusyId === trip.id}
+                      onClick={() => void handleArrive(trip)}
+                    >
+                      {lifecycleBusyId === trip.id
+                        ? "Guardando…"
+                        : online
+                          ? "Llegó / espera"
+                          : "Llegada offline"}
+                    </button>
+                  )}
+                  {trip.status === "waiting" && (
+                    <button
+                      className="trip-lifecycle-action"
+                      type="button"
+                      disabled={lifecycleBusyId === trip.id}
+                      onClick={() => void handleStartUnloading(trip)}
+                    >
+                      {lifecycleBusyId === trip.id
+                        ? "Guardando…"
+                        : online
+                          ? "Iniciar descarga"
+                          : "Descarga offline"}
+                    </button>
+                  )}
                 </div>
               </article>
             );
