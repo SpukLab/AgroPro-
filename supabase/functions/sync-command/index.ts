@@ -399,6 +399,57 @@ const userHandler = withSupabase({ auth: "user" }, async (req, ctx) => {
         break;
       }
 
+      case "transport.create_driver": {
+        const driverId = stringField(payload, "id")!;
+        if (targetRef !== driverId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_create_transport_driver";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_driver_id: driverId,
+          p_display_name: stringField(payload, "displayName")!,
+          p_license_ref:
+            stringField(payload, "licenseRef", { optional: true }) ?? null,
+          p_status: stringField(payload, "status")!,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
+      case "transport.create_trip": {
+        const tripId = stringField(payload, "id")!;
+        if (targetRef !== tripId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_create_transport_trip";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_trip_id: tripId,
+          p_load_id: stringField(payload, "loadId")!,
+          p_source_work_session_id:
+            stringField(payload, "sourceWorkSessionId")!,
+          p_vehicle_id: stringField(payload, "vehicleId")!,
+          p_driver_id: stringField(payload, "driverId")!,
+          p_origin_label: stringField(payload, "originLabel")!,
+          p_destination_label: stringField(payload, "destinationLabel")!,
+          p_planned_departure_at:
+            stringField(payload, "plannedDepartureAt")!,
+          p_status: stringField(payload, "status")!,
+          p_revision: numberField(payload, "revision"),
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
       case "storage.create_unit": {
         const storageUnitId = stringField(payload, "id")!;
         if (targetRef !== storageUnitId) return targetMismatch(clientOperationId);
