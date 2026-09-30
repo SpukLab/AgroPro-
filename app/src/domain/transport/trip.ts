@@ -95,3 +95,102 @@ export function createTransportTrip(input: {
     revision: 1
   };
 }
+
+
+export type TransportWaitingCause =
+  | "destination_queue"
+  | "destination_closed"
+  | "documentation"
+  | "scale_queue"
+  | "other";
+
+export interface DepartTransportTripPayload {
+  tripId: string;
+  expectedRevision: number;
+  departedAt: string;
+}
+
+export interface ArriveTransportTripPayload {
+  waitingTimeId: string;
+  tripId: string;
+  expectedRevision: number;
+  arrivedAt: string;
+  cause: TransportWaitingCause;
+  note?: string;
+}
+
+export interface StartUnloadingTransportTripPayload {
+  tripId: string;
+  waitingTimeId: string;
+  expectedRevision: number;
+  unloadingStartedAt: string;
+}
+
+function positiveRevision(value: number) {
+  return Number.isInteger(value) && value > 0;
+}
+
+export function createDepartTransportTripPayload(input: {
+  tripId: string;
+  expectedRevision: number;
+  departedAt: string;
+}): DepartTransportTripPayload {
+  if (!input.tripId.trim()) throw new Error("tripId is required");
+  if (!positiveRevision(input.expectedRevision)) {
+    throw new Error("expectedRevision must be positive");
+  }
+  if (!validTimestamp(input.departedAt)) {
+    throw new Error("departedAt must be a valid timestamp");
+  }
+
+  return { ...input };
+}
+
+export function createArriveTransportTripPayload(input: {
+  waitingTimeId?: string;
+  tripId: string;
+  expectedRevision: number;
+  arrivedAt: string;
+  cause?: TransportWaitingCause;
+  note?: string;
+}): ArriveTransportTripPayload {
+  if (!input.tripId.trim()) throw new Error("tripId is required");
+  if (!positiveRevision(input.expectedRevision)) {
+    throw new Error("expectedRevision must be positive");
+  }
+  if (!validTimestamp(input.arrivedAt)) {
+    throw new Error("arrivedAt must be a valid timestamp");
+  }
+
+  const note = input.note?.trim();
+  if (note && note.length > 240) throw new Error("note is too long");
+
+  return {
+    waitingTimeId: input.waitingTimeId ?? crypto.randomUUID(),
+    tripId: input.tripId,
+    expectedRevision: input.expectedRevision,
+    arrivedAt: input.arrivedAt,
+    cause: input.cause ?? "destination_queue",
+    note: note || undefined
+  };
+}
+
+export function createStartUnloadingTransportTripPayload(input: {
+  tripId: string;
+  waitingTimeId: string;
+  expectedRevision: number;
+  unloadingStartedAt: string;
+}): StartUnloadingTransportTripPayload {
+  if (!input.tripId.trim()) throw new Error("tripId is required");
+  if (!input.waitingTimeId.trim()) {
+    throw new Error("waitingTimeId is required");
+  }
+  if (!positiveRevision(input.expectedRevision)) {
+    throw new Error("expectedRevision must be positive");
+  }
+  if (!validTimestamp(input.unloadingStartedAt)) {
+    throw new Error("unloadingStartedAt must be a valid timestamp");
+  }
+
+  return { ...input };
+}
