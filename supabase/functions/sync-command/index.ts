@@ -450,6 +450,71 @@ const userHandler = withSupabase({ auth: "user" }, async (req, ctx) => {
         break;
       }
 
+      case "transport.depart_trip": {
+        const tripId = stringField(payload, "tripId")!;
+        if (targetRef !== tripId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_depart_transport_trip";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_trip_id: tripId,
+          p_expected_revision: numberField(payload, "expectedRevision"),
+          p_departed_at: stringField(payload, "departedAt")!,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
+      case "transport.arrive_trip": {
+        const tripId = stringField(payload, "tripId")!;
+        if (targetRef !== tripId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_arrive_transport_trip";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_waiting_time_id: stringField(payload, "waitingTimeId")!,
+          p_trip_id: tripId,
+          p_expected_revision: numberField(payload, "expectedRevision"),
+          p_arrived_at: stringField(payload, "arrivedAt")!,
+          p_cause: stringField(payload, "cause")!,
+          p_note: stringField(payload, "note", { optional: true }) ?? null,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
+      case "transport.start_unloading": {
+        const tripId = stringField(payload, "tripId")!;
+        if (targetRef !== tripId) return targetMismatch(clientOperationId);
+
+        rpcName = "process_start_unloading_transport_trip";
+        rpcArgs = {
+          p_organization_id: tenantScope,
+          p_client_operation_id: clientOperationId,
+          p_actor_user_id: actorUserId,
+          p_device_id: deviceId,
+          p_trip_id: tripId,
+          p_waiting_time_id: stringField(payload, "waitingTimeId")!,
+          p_expected_revision: numberField(payload, "expectedRevision"),
+          p_unloading_started_at:
+            stringField(payload, "unloadingStartedAt")!,
+          p_occurred_at_local: occurredAtLocal,
+          p_queued_at_local: queuedAtLocal,
+          p_schema_version: schemaVersion,
+        };
+        break;
+      }
+
       case "storage.create_unit": {
         const storageUnitId = stringField(payload, "id")!;
         if (targetRef !== storageUnitId) return targetMismatch(clientOperationId);
